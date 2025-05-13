@@ -4,42 +4,42 @@ public class FileParser {
 
     public static void main(String[] args) throws IOException {
         String railLinesPath = null;
-        String stationName = null;
+        String railStationsPath = null;
 
         for (String arg : args) {
             if (arg.startsWith("railLines=")) {
                 railLinesPath = arg.substring("railLines=".length());
             } else if (arg.startsWith("railStations=")) {
-                stationName = arg.substring("railStations=".length());
+                railStationsPath = arg.substring("railStations=".length());
             }
         }
 
-        if (railLinesPath == null || stationName == null) {
-            System.err.println("Usage: java FileParser railLines=<path> railStations=<placemark name>");
+        if (railLinesPath == null || railStationsPath == null) {
+            System.err.println("Files not found");
             return;
         }
 
-        readKML(new File(railLinesPath).toURI().toURL().openStream(), stationName);
+        readTrainLines(new File(railLinesPath).toURI().toURL().openStream());
     }
 
-    private static void readKML(InputStream fileKML, String nameCoordinates) {
-        String column = null;
-        Boolean folder = Boolean.TRUE;
-        Boolean placemark = Boolean.FALSE;
-        Boolean placeCorrect = Boolean.FALSE;
+    private static void readTrainLines(InputStream fileKML) {
+        String column;
+        Boolean folder = true;
+        Boolean placemark = false;
+        Boolean placeCorrect = false;
         BufferedReader br = new BufferedReader(new InputStreamReader(fileKML));
         try {
             while ((column = br.readLine()) != null) {
                 if (folder) {
                     int ifolder = column.indexOf("<Document>");
                     if (ifolder != -1) {
-                        folder = Boolean.FALSE;
-                        placemark = Boolean.TRUE;
+                        folder = false;
+                        placemark = true;
                         continue;
                     }
                 }
                 if (placemark) {
-                    String tmpLine = nameCoordinates;
+                    String tmpLine = column;
                     tmpLine = tmpLine.replaceAll("\t", "");
                     tmpLine = tmpLine.replaceAll(" ", "");
                     String tmpColumn = column;
