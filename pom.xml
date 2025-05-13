@@ -52,8 +52,35 @@
             <version>34-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-xml</artifactId>
+            <version>29.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>RELEASE</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.esri.geometry/esri-geometry-api -->
+        <dependency>
+            <groupId>com.esri.geometry</groupId>
+            <artifactId>esri-geometry-api</artifactId>
+            <version>2.2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.38</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
     <repositories>
+        <repository>
+            <id>my-internal-site</id>
+            <url>https://myserver/repo</url>
+        </repository>
         <repository>
             <id>osgeo</id>
             <name>OSGeo Release Repository</name>
@@ -67,6 +94,11 @@
             <url>https://repo.osgeo.org/repository/snapshot/</url>
             <snapshots><enabled>true</enabled></snapshots>
             <releases><enabled>false</enabled></releases>
+        </repository>
+        <repository>
+            <id>esri</id>
+            <name>Esri Repository</name>
+            <url>https://esri.jfrog.io/artifactory/arcgis</url>
         </repository>
     </repositories>
     <build>
