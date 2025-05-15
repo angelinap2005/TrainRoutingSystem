@@ -37,10 +37,10 @@ public class FileParser {
         Document doc = db.parse(fileKML);
         doc.getDocumentElement().normalize();
         System.out.println("root element: " + doc.getDocumentElement().getNodeName());
-        NodeList nList = doc.getElementsByTagName("placemark");
+        NodeList nList = doc.getElementsByTagName("name");
         for (int temp = 0; temp < nList.getLength(); temp++) {
-            Node nNode = nList.item(temp);
-            if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+            Node nNode = nList.item(temp).getFirstChild();
+            if (nNode.getNodeType() == Node.TEXT_NODE) {
                 Element eElement = (Element) nNode;
                 System.out.println("Line: " + eElement.getElementsByTagName("name").item(0).getTextContent());
             }
