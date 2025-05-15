@@ -1,16 +1,25 @@
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 //code from https://stackoverflow.com/questions/2310139/how-to-read-xml-response-from-a-url-in-java
 public class FileParser {
 
-    public static void main(String[] args) throws IOException {
-        String railLinesPath = null;
-        String railStationsPath = null;
+    public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
+        File railLinesPath = null;
+        File railStationsPath = null;
 
         for (String arg : args) {
             if (arg.startsWith("railLines=")) {
-                railLinesPath = arg.substring("railLines=".length());
+                railLinesPath = new File(arg.substring("railLines=".length()));
             } else if (arg.startsWith("railStations=")) {
-                railStationsPath = arg.substring("railStations=".length());
+                railStationsPath = new File(arg.substring("railStations=".length()));
             }
         }
 
@@ -19,59 +28,22 @@ public class FileParser {
             return;
         }
 
-        readTrainLines(new File(railLinesPath).toURI().toURL().openStream());
+        readTrainLines(railLinesPath);
     }
 
-    private static void readTrainLines(InputStream fileKML) {
-        String column;
-        Boolean folder = true;
-        Boolean placemark = false;
-        Boolean placeCorrect = false;
-        BufferedReader br = new BufferedReader(new InputStreamReader(fileKML));
-        try {
-            while ((column = br.readLine()) != null) {
-                if (folder) {
-                    int ifolder = column.indexOf("<Document>");
-                    if (ifolder != -1) {
-                        folder = false;
-                        placemark = true;
-                        continue;
-                    }
-                }
-                if (placemark) {
-                    String tmpLine = column;
-                    tmpLine = tmpLine.replaceAll("\t", "");
-                    tmpLine = tmpLine.replaceAll(" ", "");
-                    String tmpColumn = column;
-                    tmpColumn = tmpColumn.replaceAll("\t", "");
-                    tmpColumn = tmpColumn.replaceAll(" ", "");
-                    int name = tmpColumn.indexOf(tmpLine);
-                    if (name != -1) {
-                        placemark = Boolean.FALSE;
-                        placeCorrect = Boolean.TRUE;
-                        continue;
-                    }
-                }
-                if (placeCorrect) {
-                    int coordin = column.indexOf("<coordinates>");
-                    if (coordin != -1) {
-                        String tmpCoordin = column;
-                        tmpCoordin = tmpCoordin.replaceAll(" ", "");
-                        tmpCoordin = tmpCoordin.replaceAll("\t", "");
-                        tmpCoordin = tmpCoordin.replaceAll("<coordinates>", "");
-                        tmpCoordin = tmpCoordin
-                                .replaceAll("</coordinates>", "");
-                        String[] coo = tmpCoordin.split(",");
-                        System.out.println("LONG: "+coo[0]);
-                        System.out.println("LATI: "+coo[1]);
-                        break;
-                    }
-                }
-
+    private static void readTrainLines(File fileKML) throws ParserConfigurationException, IOException, SAXException {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        Document doc = db.parse(fileKML);
+        doc.getDocumentElement().normalize();
+        System.out.println("root element: " + doc.getDocumentElement().getNodeName());
+        NodeList nList = doc.getElementsByTagName("placemark");
+        for (int temp = 0; temp < nList.getLength(); temp++) {
+            Node nNode = nList.item(temp);
+            if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+                Element eElement = (Element) nNode;
+                System.out.println("Line: " + eElement.getElementsByTagName("name").item(0).getTextContent());
             }
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
