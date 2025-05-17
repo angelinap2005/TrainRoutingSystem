@@ -1,7 +1,7 @@
 package util;
 
-import dto.RailLines;
-import dto.RailStations;
+import dto.RailLine;
+import dto.RailStation;
 import lombok.Getter;
 import org.w3c.dom.*;
 
@@ -9,8 +9,8 @@ import java.util.ArrayList;
 
 @Getter
 public class ObjectParser {
-    private final ArrayList<RailLines> railLines = new ArrayList<>();
-    private final ArrayList<RailStations> railStations = new ArrayList<>();
+    private final ArrayList<RailLine> railLines = new ArrayList<>();
+    private final ArrayList<RailStation> railStations = new ArrayList<>();
 
     public void traverse(Document doc) {
         Element kmlElement = (Element) doc.getElementsByTagName("kml").item(0);
@@ -31,7 +31,7 @@ public class ObjectParser {
         for (int i = 0; i < nodeList.getLength(); ++i) {
             Node node = nodeList.item(i);
             if (node.getNodeType() == Node.ELEMENT_NODE) {
-                RailLines railLine = new RailLines();
+                RailLine railLine = new RailLine();
                 Element tElement = (Element) node;
                 railLine.setName(tElement.getElementsByTagName("name").item(0).getTextContent());
                 railLine.setStyleUrl(tElement.getElementsByTagName("styleUrl").item(0).getTextContent());
@@ -48,7 +48,7 @@ public class ObjectParser {
         for (int i = 0; i < nodeList.getLength(); ++i) {
             Node node = nodeList.item(i);
             if (node.getNodeType() == Node.ELEMENT_NODE) {
-                RailStations railStation = new RailStations();
+                RailStation railStation = new RailStation();
                 Element tElement = (Element) node;
                 railStation.setName(tElement.getElementsByTagName("name").item(0).getTextContent());
                 railStation.setStyleUrl(tElement.getElementsByTagName("styleUrl").item(0).getTextContent());

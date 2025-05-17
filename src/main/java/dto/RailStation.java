@@ -6,6 +6,6 @@ import lombok.Setter;
 import java.util.ArrayList;
 @Getter
 @Setter
-public class RailStations extends RailObject{
-    ArrayList<RailLines> railLines;
+public class RailStation extends RailObject{
+    ArrayList<RailLine> railLines;
 }

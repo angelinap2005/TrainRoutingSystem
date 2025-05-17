@@ -5,5 +5,5 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class RailLines extends RailObject {
+public class RailLine extends RailObject {
 }

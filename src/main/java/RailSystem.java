@@ -1,5 +1,5 @@
-import dto.RailLines;
-import dto.RailStations;
+import dto.RailLine;
+import dto.RailStation;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import util.AddRailLines;
@@ -46,7 +46,7 @@ public class RailSystem {
         return doc;
     }
 
-    private static void setRailLines(ArrayList<RailLines> railLines, ArrayList<RailStations> railStations) {
+    private static void setRailLines(ArrayList<RailLine> railLines, ArrayList<RailStation> railStations) {
         AddRailLines addRailLines = new AddRailLines();
         addRailLines.addLines(railLines, railStations);
     }

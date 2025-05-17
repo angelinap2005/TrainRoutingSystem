@@ -1,17 +1,17 @@
 package util;
 
-import dto.RailLines;
-import dto.RailStations;
+import dto.RailLine;
+import dto.RailStation;
 
 import java.util.ArrayList;
 
 public class AddRailLines {
     public AddRailLines() {}
 
-    public void addLines(ArrayList<RailLines> railLines, ArrayList<RailStations> railStations) {
+    public void addLines(ArrayList<RailLine> railLines, ArrayList<RailStation> railStations) {
         for(int i = 0; i < railStations.size(); i++) {
-            ArrayList<RailLines> lines = new ArrayList<>();
-            for (RailLines line : railLines) {
+            ArrayList<RailLine> lines = new ArrayList<>();
+            for (RailLine line : railLines) {
                 if(line.getName().contains(railStations.get(i).getName())) {
                     lines.add(line);
                 }
