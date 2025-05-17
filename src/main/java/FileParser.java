@@ -3,6 +3,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import util.ObjectParser;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -37,33 +38,8 @@ public class FileParser {
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document doc = db.parse(fileKML);
         doc.getDocumentElement().normalize();
+        ObjectParser objectParser = new ObjectParser();
 
-        System.out.println("Root element: " + doc.getDocumentElement().getNodeName());
-
-        traverse(doc.getDocumentElement());
-    }
-
-    private static void traverse(Node node) {
-        if (node.getNodeType() == Node.ELEMENT_NODE) {
-            Element element = (Element) node;
-            System.out.println("Element: " + element.getTagName());
-
-            if (element.hasAttributes()) {
-                for (int i = 0; i < element.getAttributes().getLength(); i++) {
-                    Node attr = element.getAttributes().item(i);
-                    System.out.println("  Attribute: " + attr.getNodeName() + " = " + attr.getNodeValue());
-                }
-            }
-
-            String text = element.getTextContent().trim();
-            if (!text.isEmpty()) {
-                System.out.println("  Text Content: " + text);
-            }
-        }
-
-        NodeList nodeList = node.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            traverse(nodeList.item(i));
-        }
+        objectParser.traverse(doc);
     }
 }

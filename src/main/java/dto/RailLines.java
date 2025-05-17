@@ -2,7 +2,6 @@ package dto;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.locationtech.jts.geom.Point;
 
 import java.util.ArrayList;
 
@@ -11,5 +10,7 @@ import java.util.ArrayList;
 public class RailLines {
     String name;
     String styleUrl;
-    ArrayList<Point> coordinates;
+    String[] coordinates;
+    ArrayList<Integer> lineString;
+    String placemark;
 }
