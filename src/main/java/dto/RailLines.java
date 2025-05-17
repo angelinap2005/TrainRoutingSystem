@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 @Getter
 @Setter
-public class RailLines {
+public class RailLines extends RailObject {
     String name;
     String styleUrl;
     String[] coordinates;

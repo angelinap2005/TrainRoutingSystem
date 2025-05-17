@@ -4,11 +4,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
-@Getter
 @Setter
-public class RailStations extends RailObject{
+@Getter
+public class RailObject {
     String name;
     String styleUrl;
     String[] coordinates;
-    ArrayList<RailLines> railLines;
+    ArrayList<Integer> lineString;
+    String placemark;
 }

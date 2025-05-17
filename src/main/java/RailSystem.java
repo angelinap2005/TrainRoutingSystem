@@ -1,16 +1,18 @@
+import dto.RailLines;
+import dto.RailStations;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import util.AddRailLines;
 import util.ObjectParser;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
-/*code from: https://stackoverflow.com/questions/2310139/how-to-read-xml-response-from-a-url-in-java, https://www.geeksforgeeks.org/java-program-to-extract-content-from-a-xml-document/ */
-public class FileParser {
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+
+public class RailSystem {
 
     public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
         File railLinesPath = null;
@@ -29,17 +31,23 @@ public class FileParser {
             return;
         }
 
-        readDocuments(railLinesPath);
-        readDocuments(railStationsPath);
+        ObjectParser parser = new ObjectParser();
+        parser.traverse(parseDoc(railLinesPath));
+        parser.traverse(parseDoc(railStationsPath));
+
+        setRailLines(parser.getRailLines(), parser.getRailStations());
     }
 
-    private static void readDocuments(File fileKML) throws ParserConfigurationException, IOException, SAXException {
+    private static Document parseDoc(File fileKML) throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document doc = db.parse(fileKML);
         doc.getDocumentElement().normalize();
-        ObjectParser objectParser = new ObjectParser();
+        return doc;
+    }
 
-        objectParser.traverse(doc);
+    private static void setRailLines(ArrayList<RailLines> railLines, ArrayList<RailStations> railStations) {
+        AddRailLines addRailLines = new AddRailLines();
+        addRailLines.addLines(railLines, railStations);
     }
 }
