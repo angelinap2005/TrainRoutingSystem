@@ -7,8 +7,5 @@ import java.util.ArrayList;
 @Getter
 @Setter
 public class RailStations extends RailObject{
-    String name;
-    String styleUrl;
-    String[] coordinates;
     ArrayList<RailLines> railLines;
 }
