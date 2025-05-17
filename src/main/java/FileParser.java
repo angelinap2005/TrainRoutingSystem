@@ -8,7 +8,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-//code from https://stackoverflow.com/questions/2310139/how-to-read-xml-response-from-a-url-in-java
+/*code from: https://stackoverflow.com/questions/2310139/how-to-read-xml-response-from-a-url-in-java, https://www.geeksforgeeks.org/java-program-to-extract-content-from-a-xml-document/ */
 public class FileParser {
 
     public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
@@ -28,24 +28,42 @@ public class FileParser {
             return;
         }
 
-        readTrainLines(railLinesPath);
+        readDocuments(railLinesPath);
+        readDocuments(railStationsPath);
     }
 
-    private static void readTrainLines(File fileKML) throws ParserConfigurationException, IOException, SAXException {
+    private static void readDocuments(File fileKML) throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document doc = db.parse(fileKML);
         doc.getDocumentElement().normalize();
-        System.out.println("root element: " + doc.getDocumentElement().getNodeName());
-        NodeList nList = doc.getElementsByTagName("name");
-        for (int temp = 0; temp < nList.getLength(); temp++) {
-            Node nNode = nList.item(temp).getFirstChild();
-            if (nNode.getNodeType() == Node.TEXT_NODE) {
-                Element eElement = (Element) nNode;
-                System.out.println("Line: " + eElement.getElementsByTagName("name").item(0).getTextContent());
-            }
-        }
+
+        System.out.println("Root element: " + doc.getDocumentElement().getNodeName());
+
+        traverse(doc.getDocumentElement());
     }
 
+    private static void traverse(Node node) {
+        if (node.getNodeType() == Node.ELEMENT_NODE) {
+            Element element = (Element) node;
+            System.out.println("Element: " + element.getTagName());
 
+            if (element.hasAttributes()) {
+                for (int i = 0; i < element.getAttributes().getLength(); i++) {
+                    Node attr = element.getAttributes().item(i);
+                    System.out.println("  Attribute: " + attr.getNodeName() + " = " + attr.getNodeValue());
+                }
+            }
+
+            String text = element.getTextContent().trim();
+            if (!text.isEmpty()) {
+                System.out.println("  Text Content: " + text);
+            }
+        }
+
+        NodeList nodeList = node.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            traverse(nodeList.item(i));
+        }
+    }
 }
