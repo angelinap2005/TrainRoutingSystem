@@ -14,10 +14,4 @@ public class Route {
     public Route(RailLine railLine) {
         this.railLine = railLine;
     }
-
-    public Route(RailLine railLine, RailStation destination, double weight) {
-        this.railLine = railLine;
-        this.destination = destination;
-        this.weight = weight;
-    }
 }
