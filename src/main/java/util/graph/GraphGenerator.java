@@ -1,5 +1,5 @@
 
-package util.Graph;
+package util.graph;
 
 import java.util.List;
 import java.util.HashSet;
@@ -120,7 +120,7 @@ public class GraphGenerator {
         }
     }
 
-    public void printGraph() {
+    public void printEntireMap() {
         try {
             Viewer viewer = graph.display();
             viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);

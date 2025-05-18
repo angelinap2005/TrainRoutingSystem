@@ -16,7 +16,7 @@ public class ObjectParser {
         Element kmlElement = (Element) doc.getElementsByTagName("kml").item(0);
         Element documentElement = (Element) kmlElement.getElementsByTagName("Document").item(0);
         String docName = documentElement.getElementsByTagName("name").item(0).getTextContent();
-
+        //check document name
         if ("London Train Lines".equals(docName)) {
             railLineParser(doc);
         } else if ("London stations".equals(docName)) {
