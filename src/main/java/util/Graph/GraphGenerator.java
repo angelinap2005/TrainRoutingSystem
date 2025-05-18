@@ -12,7 +12,7 @@ import org.graphstream.ui.view.Viewer;
 import dto.Route;
 import dto.Station;
 
-/* code from https://graphstream-project.org/doc/ */
+/* code from https://graphstream-project.org/doc/ documentation*/
 @Getter
 @Setter
 public class GraphGenerator {
@@ -20,17 +20,16 @@ public class GraphGenerator {
     private Set<String> processedEdges;
 
     public GraphGenerator() {
+        //set graph properties
         System.setProperty("org.graphstream.ui", "swing");
         System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
         this.graph = new SingleGraph("Train Graph");
         this.processedEdges = new HashSet<>();
 
-        // Add default styling
+        //add graph styling properties
         graph.setAttribute("ui.quality");
         graph.setAttribute("ui.antialias");
-        graph.setAttribute("ui.stylesheet",
-                "node { size: 10px; fill-color: #666666; text-size: 14; }" +
-                        "edge { size: 2px; fill-color: #333333; }");
+        graph.setAttribute("ui.stylesheet", "node { size: 10px; fill-color: #666666; text-size: 14; }" + "edge { size: 2px; fill-color: #333333; }");
     }
 
     public Graph generateGraph(List<Station> stations) {
@@ -39,13 +38,13 @@ public class GraphGenerator {
         }
 
         try {
-            // Clear existing graph
+            //clear the graph
             graph.clear();
             processedEdges.clear();
 
-            // Add nodes first
+            //add graph nodes
             addNodes(stations);
-            // Then add edges
+            //add graph edges
             addEdges(stations);
 
         } catch (Exception e) {
@@ -63,7 +62,8 @@ public class GraphGenerator {
                     Node node = graph.addNode(nodeName);
                     node.setAttribute("ui.label", nodeName);
                 } catch (IdAlreadyInUseException e) {
-                    // Node already exists, skip
+                    //if node already exists, ignore
+                    System.err.println("Node " + nodeName + " already exists");
                 }
             }
         }
@@ -82,8 +82,7 @@ public class GraphGenerator {
                         addEdgeSafely(sourceStation, destStation);
                     }
                 } catch (Exception e) {
-                    System.err.println("Error processing route from " + sourceStation +
-                            ": " + e.getMessage());
+                    System.err.println("Error processing route from " + sourceStation + ": " + e.getMessage());
                 }
             }
         }
@@ -97,33 +96,27 @@ public class GraphGenerator {
     }
 
     private boolean isValidRoute(Route route) {
-        return route != null &&
-                route.getRailLine() != null &&
-                route.getRailLine().getName() != null &&
-                route.getDestination() != null &&
-                route.getDestination().getName() != null;
+        return route != null && route.getRailLine() != null && route.getRailLine().getName() != null && route.getDestination() != null && route.getDestination().getName() != null;
     }
 
     private void addEdgeSafely(String sourceStation, String destStation) {
-        // Create unique edge identifiers for both directions
+        //create edge ID
         String edgeId = sourceStation + "--" + destStation;
         String reverseEdgeId = destStation + "--" + sourceStation;
 
-        // Check if we've already processed this edge in either direction
+        //check if edge has already been processed
         if (processedEdges.contains(edgeId) || processedEdges.contains(reverseEdgeId)) {
             return;
         }
 
         try {
-            // Add the edge with a unique ID
+            //add edge with ID
             Edge edge = graph.addEdge(edgeId, sourceStation, destStation, false); // false for undirected edge
             if (edge != null) {
                 processedEdges.add(edgeId);
             }
         } catch (Exception e) {
-            // Log error but don't throw exception to allow processing to continue
-            System.err.println("Warning: Could not create edge between " +
-                    sourceStation + " and " + destStation);
+            System.err.println("Warning: Could not create edge between " + sourceStation + " and " + destStation);
         }
     }
 
@@ -132,8 +125,7 @@ public class GraphGenerator {
             Viewer viewer = graph.display();
             viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
         } catch (Exception e) {
-            System.err.println("Error displaying graph. Make sure GraphStream UI is properly configured: " +
-                    e.getMessage());
+            System.err.println("Error displaying graph: " + e.getMessage());
         }
     }
 }

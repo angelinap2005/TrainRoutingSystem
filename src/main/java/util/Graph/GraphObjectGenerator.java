@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.*;
-/* code from https://graphstream-project.org/doc/ */
+/* code from https://graphstream-project.org/doc/ documentation*/
 @Getter
 @Setter
 public class GraphObjectGenerator {
@@ -38,7 +38,7 @@ public class GraphObjectGenerator {
         lineToStationsMap.clear();
         stationConnections.clear();
 
-        // Map each line to its stations
+        //map the lines to the stations
         for (RailLine line : railLines) {
             if (line != null && line.getName() != null) {
                 List<RailStation> stationsOnLine = findStationsOnLine(line, railStations);
@@ -52,9 +52,7 @@ public class GraphObjectGenerator {
 
         for (RailStation station : allStations) {
             if (station != null && station.getRailLines() != null) {
-                boolean isOnLine = station.getRailLines().stream()
-                        .anyMatch(rl -> rl != null && rl.getName() != null &&
-                                rl.getName().equals(line.getName()));
+                boolean isOnLine = station.getRailLines().stream().anyMatch(rl -> rl != null && rl.getName() != null && rl.getName().equals(line.getName()));
                 if (isOnLine) {
                     stationsOnLine.add(station);
                 }
@@ -113,7 +111,7 @@ public class GraphObjectGenerator {
             return connectedStations;
         }
 
-        // Add adjacent stations
+        //add connected stations
         if (stationIndex > 0) {
             connectedStations.add(stationsOnLine.get(stationIndex - 1));
         }

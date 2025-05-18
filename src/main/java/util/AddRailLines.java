@@ -13,13 +13,11 @@ public class AddRailLines {
             String stationName = station.getName();
 
             for (RailLine line : railLines) {
-                // Check if the station is on this line
-                if (line.getName() != null &&
-                        line.getName().contains(stationName)) {
+                //check if the name of the line contains the name of the station
+                if (line.getName() != null && line.getName().contains(stationName)) {
                     lines.add(line);
                 }
             }
-
             station.setRailLines(lines);
         }
     }
