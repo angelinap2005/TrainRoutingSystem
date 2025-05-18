@@ -3,6 +3,8 @@ import dto.RailStation;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import util.AddRailLines;
+import util.Graph.GraphGenerator;
+import util.Graph.GraphObjectGenerator;
 import util.ObjectParser;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -32,10 +34,15 @@ public class RailSystem {
         }
 
         ObjectParser parser = new ObjectParser();
+        GraphObjectGenerator graphObjectGenerator = new GraphObjectGenerator();
+        GraphGenerator graphGenerator = new GraphGenerator();
         parser.traverse(parseDoc(railLinesPath));
         parser.traverse(parseDoc(railStationsPath));
 
         setRailLines(parser.getRailLines(), parser.getRailStations());
+        graphObjectGenerator.controller(parser.getRailLines(), parser.getRailStations());
+        graphGenerator.generateGraph(graphObjectGenerator.getStations());
+        graphGenerator.printGraph();
     }
 
     private static Document parseDoc(File fileKML) throws ParserConfigurationException, IOException, SAXException {

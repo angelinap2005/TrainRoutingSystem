@@ -40,6 +40,18 @@
             <artifactId>gt-swing</artifactId>
             <version>${geotools.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.graphstream/gs-core -->
+        <dependency>
+            <groupId>org.graphstream</groupId>
+            <artifactId>gs-core</artifactId>
+            <version>2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.graphstream</groupId>
+            <artifactId>gs-ui-swing</artifactId>
+            <version>2.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-main</artifactId>

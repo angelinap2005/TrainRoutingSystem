@@ -1,7 +1,11 @@
 package dto;
 
-import java.util.ArrayList;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.util.ArrayList;
+@Getter
+@Setter
 public class Station {
     RailStation railStation;
     ArrayList<Route> routes;
