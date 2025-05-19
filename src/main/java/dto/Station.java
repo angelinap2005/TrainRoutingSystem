@@ -7,8 +7,8 @@ import java.util.ArrayList;
 @Getter
 @Setter
 public class Station {
-    RailStation railStation;
-    ArrayList<Route> routes;
+    private RailStation railStation;
+    private ArrayList<Route> routes;
 
     public Station(RailStation railStation, ArrayList<Route> routes) {
         this.railStation = railStation;

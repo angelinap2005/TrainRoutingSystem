@@ -1,8 +1,7 @@
 package util.graph;
 
-import java.util.List;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.graphstream.graph.*;
@@ -17,21 +16,31 @@ import dto.Station;
 public class GraphGenerator {
     private Graph graph;
     private Set<String> processedEdges;
+    private GraphObjectGenerator graphObjectGenerator;
+    private List<Station> stations;
+    private RouteGenerator routeGenerator;
 
-    public GraphGenerator() {
-        //set graph properties
+    public GraphGenerator(GraphObjectGenerator graphObjectGenerator) {
+        this.graphObjectGenerator = graphObjectGenerator;
+        setSystemProperties();
+    }
+
+    private void setSystemProperties() {
+        // Same system properties as RouteGenerator
         System.setProperty("org.graphstream.ui", "swing");
         System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
         this.graph = new SingleGraph("Train Graph");
         this.processedEdges = new HashSet<>();
 
-        //add graph styling properties
+        // Match the exact same styling attributes as RouteGenerator
         graph.setAttribute("ui.quality");
         graph.setAttribute("ui.antialias");
         graph.setAttribute("ui.stylesheet", "node { size: 10px; fill-color: #666666; text-size: 14; }" + "edge { size: 2px; fill-color: #333333; }");
     }
 
+
     public Graph generateGraph(List<Station> stations) {
+        this.stations = stations;
         if (stations == null) {
             throw new IllegalArgumentException("Stations list cannot be null");
         }
@@ -59,6 +68,7 @@ public class GraphGenerator {
                 String nodeName = station.getRailStation().getName();
                 try {
                     Node node = graph.addNode(nodeName);
+                    //set the node label to station name
                     node.setAttribute("ui.label", nodeName);
                 } catch (IdAlreadyInUseException e) {
                     //if node already exists, ignore
@@ -99,19 +109,22 @@ public class GraphGenerator {
     }
 
     private void addEdgeSafely(String sourceStation, String destStation) {
-        //create edge ID
         String edgeId = sourceStation + "--" + destStation;
         String reverseEdgeId = destStation + "--" + sourceStation;
 
-        //check if edge has already been processed
         if (processedEdges.contains(edgeId) || processedEdges.contains(reverseEdgeId)) {
+            //if edge already exists, ignore
             return;
         }
 
         try {
-            //add edge with ID
-            Edge edge = graph.addEdge(edgeId, sourceStation, destStation, false); // false for undirected edge
+            Edge edge = graph.addEdge(edgeId, sourceStation, destStation, false);
             if (edge != null) {
+                //get weight from distance map
+                Double weight = graphObjectGenerator.getStationDistances().getOrDefault(sourceStation, new HashMap<>()).getOrDefault(destStation, 1.0);
+
+                //set length as weight attribute
+                edge.setAttribute("length", weight);
                 processedEdges.add(edgeId);
             }
         } catch (Exception e) {
@@ -119,12 +132,50 @@ public class GraphGenerator {
         }
     }
 
+
     public void printEntireMap() {
         try {
+            //set default node and edge styles
+            graph.edges().forEach(edge -> {
+                edge.setAttribute("ui.style", "fill-color: #333333;");
+            });
+            graph.nodes().forEach(node -> {
+                node.setAttribute("ui.style", "fill-color: #666666;");
+            });
+
             Viewer viewer = graph.display();
             viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
         } catch (Exception e) {
             System.err.println("Error displaying graph: " + e.getMessage());
         }
     }
+
+
+    public void planRoute(String start, String end) {
+        Station startStation = null;
+        Station endStation = null;
+        List<Station> stations = getGraphObjectGenerator().getStations();
+
+        //check that the start and end stations are valid
+        for(Station station : stations) {
+            String name = station.getRailStation().getName();
+            if(name.equals(start)) {
+                startStation = station;
+            } else if(name.equals(end)) {
+                endStation = station;
+            }
+        }
+
+        if(startStation == null || endStation == null) {
+            System.out.println("Invalid start or end station");
+        } else {
+            routeGenerator = new RouteGenerator(stations, startStation, endStation, graph);
+            routeGenerator.calculateRoute();
+        }
+    }
+
+    public void printRoute(){
+        routeGenerator.displayRoute();
+    }
+
 }

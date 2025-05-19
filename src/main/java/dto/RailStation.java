@@ -7,7 +7,7 @@ import java.util.ArrayList;
 @Getter
 @Setter
 public class RailStation extends RailObject{
-    ArrayList<RailLine> railLines;
+    private ArrayList<RailLine> railLines;
 
     public RailStation() {}
 }

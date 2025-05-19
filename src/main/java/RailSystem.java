@@ -22,6 +22,7 @@ import java.util.ArrayList;
 * https://stackoverflow.com/questions/3694380/calculating-distance-between-two-points-using-latitude-longitude
 * https://www.geodatasource.com/resources/tutorials/how-to-calculate-the-distance-between-2-locations-using-java
 * https://www.geeksforgeeks.org/haversine-formula-to-find-distance-between-two-points-on-a-sphere/
+* https://graphstream-project.org/doc/Algorithms/Shortest-path/Dijkstra/#:~:text=Dijkstra's%20algorithm%20computes%20the%20shortest,works%20only%20for%20nonnegative%20lengths
 * */
 
 public class RailSystem {
@@ -46,7 +47,7 @@ public class RailSystem {
 
         ObjectParser parser = new ObjectParser();
         GraphObjectGenerator graphObjectGenerator = new GraphObjectGenerator();
-        GraphGenerator graphGenerator = new GraphGenerator();
+        GraphGenerator graphGenerator = new GraphGenerator(graphObjectGenerator);
         UserControl userControl = new UserControl(graphGenerator);
         parser.traverse(parseDoc(railLinesPath));
         parser.traverse(parseDoc(railStationsPath));

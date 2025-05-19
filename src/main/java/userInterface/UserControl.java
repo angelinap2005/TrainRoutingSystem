@@ -3,10 +3,10 @@ package userInterface;
 import util.graph.GraphGenerator;
 
 import java.util.Scanner;
-
 public class UserControl {
-    Scanner scanner = new Scanner(System.in);
-    GraphGenerator graphGenerator;
+    private Scanner scanner = new Scanner(System.in);
+    private GraphGenerator graphGenerator;
+
     public UserControl(GraphGenerator graphGenerator){
         this.graphGenerator = graphGenerator;
     }
@@ -47,6 +47,13 @@ public class UserControl {
         String start = scanner.nextLine();
         System.out.println("Please enter the name of the destination station: ");
         String end = scanner.nextLine();
-        //graphGenerator.planRoute(start, end);
+        graphGenerator.planRoute(start, end);
+        System.out.println("Would you like to view the map of the route? (y/n) ");
+        String input = scanner.nextLine();
+        if(input != null || input.length() > 0){
+            if(input.equals("y")){
+                graphGenerator.printRoute();
+            }
+        }
     }
 }

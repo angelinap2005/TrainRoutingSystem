@@ -143,11 +143,13 @@ public class GraphObjectGenerator {
         } catch (NumberFormatException e) {
             System.err.println("Error calculating distance between " + station1.getName() + " and " + station2.getName() + ": " + e.getMessage());
         }
-        return 1.0; //default distance if calculation fails
+        //default distance if calculation fails
+        return 1.0;
     }
 
     private double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
-        final int EARTH_RADIUS = 6371; //radius of Earth in kilometers
+        //radius of Earth in kilometers
+        final int EARTH_RADIUS = 6371;
 
         //get the difference between latitudes and longitudes
         double dLat = Math.toRadians(lat2 - lat1);

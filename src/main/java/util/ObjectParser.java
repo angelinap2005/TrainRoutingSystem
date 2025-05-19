@@ -9,8 +9,8 @@ import java.util.ArrayList;
 
 @Getter
 public class ObjectParser {
-    private final ArrayList<RailLine> railLines = new ArrayList<>();
-    private final ArrayList<RailStation> railStations = new ArrayList<>();
+    private ArrayList<RailLine> railLines = new ArrayList<>();
+    private ArrayList<RailStation> railStations = new ArrayList<>();
 
     public void traverse(Document doc) {
         Element kmlElement = (Element) doc.getElementsByTagName("kml").item(0);
