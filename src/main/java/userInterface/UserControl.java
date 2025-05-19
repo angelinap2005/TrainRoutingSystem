@@ -47,7 +47,18 @@ public class UserControl {
         String start = scanner.nextLine();
         System.out.println("Please enter the name of the destination station: ");
         String end = scanner.nextLine();
-        graphGenerator.planRoute(start, end);
+
+        System.out.println("Would you like to view the shortest route or route with the least amount of stops? (shortest/least) ");
+        String decision = scanner.nextLine();
+        if(decision != null || decision.length() > 0){
+            if(decision.equals("shortest")){
+                graphGenerator.planRoute(start, end,true);
+            }
+            if(decision.equals("least")){
+                graphGenerator.planRoute(start, end,false);
+            }
+        }
+
         System.out.println("Would you like to view the map of the route? (y/n) ");
         String input = scanner.nextLine();
         if(input != null || input.length() > 0){

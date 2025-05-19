@@ -155,7 +155,7 @@ public class GraphGenerator {
     }
 
 
-    public void planRoute(String start, String end) {
+    public void planRoute(String start, String end, boolean shortestRoute) {
         Station startStation = null;
         Station endStation = null;
         List<Station> stations = getGraphObjectGenerator().getStations();
@@ -174,7 +174,11 @@ public class GraphGenerator {
             System.out.println("Invalid start or end station");
         } else {
             routeGenerator = new RouteGenerator(stations, startStation, endStation, graph);
-            routeGenerator.calculateRoute();
+            if(shortestRoute){
+                routeGenerator.calculateShortestRoute();
+            }else{
+                //route with the fewest stops
+            }
         }
     }
 

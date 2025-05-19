@@ -35,7 +35,7 @@ public class RouteGenerator{
         graph.setAttribute("ui.stylesheet", "node { size: 10px; fill-color: #666666; text-size: 14; }" + "edge { size: 2px; fill-color: #333333; }");
     }
 
-    public void calculateRoute() {
+    public void calculateShortestRoute() {
         String startNodeName = startStation.getRailStation().getName();
         Node startNode = graph.getNode(startNodeName);
         String endNodeName = endStation.getRailStation().getName();
