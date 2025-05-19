@@ -7,8 +7,12 @@ import org.w3c.dom.*;
 
 import java.util.ArrayList;
 
+/*For file parsing code was taken from:
+* https://www.tutorialspoint.com/java_xml/java_dom_parse_document.htm
+* https://www.geeksforgeeks.org/java-program-to-extract-content-from-a-xml-document/
+*/
 @Getter
-public class ObjectParser {
+public class FileParser {
     private ArrayList<RailLine> railLines = new ArrayList<>();
     private ArrayList<RailStation> railStations = new ArrayList<>();
 

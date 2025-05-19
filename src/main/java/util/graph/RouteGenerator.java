@@ -9,6 +9,10 @@ import lombok.Setter;
 import org.graphstream.graph.*;
 import org.graphstream.algorithm.Dijkstra;
 
+/*For shortest path calculations, code taken from:
+* https://graphstream-project.org/doc/Algorithms/Shortest-path/Dijkstra/
+*/
+
 @Setter
 @Getter
 public class RouteGenerator{

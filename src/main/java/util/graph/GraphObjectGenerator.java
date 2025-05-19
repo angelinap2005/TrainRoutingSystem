@@ -8,6 +8,12 @@ import lombok.Getter;
 import lombok.Setter;
 import java.util.*;
 
+/*For distance/weight calculations code was take from:
+* https://stackoverflow.com/questions/3694380/calculating-distance-between-two-points-using-latitude-longitude
+* https://www.geodatasource.com/resources/tutorials/how-to-calculate-the-distance-between-2-locations-using-java
+* https://www.geeksforgeeks.org/haversine-formula-to-find-distance-between-two-points-on-a-sphere/
+*/
+
 @Getter
 @Setter
 public class GraphObjectGenerator {

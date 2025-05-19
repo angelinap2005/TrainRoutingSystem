@@ -20,7 +20,7 @@ public class UserControl {
     private void displayCommands(){
         System.out.println("Welcome to the London Underground Routing system!\n");
         System.out.println("Please select an option from the menu below: \n");
-        System.out.println("1. View all stations");
+        System.out.println("1. View map of stations");
         System.out.println("2. Plan a route");
         System.out.println("3. Exit");
 

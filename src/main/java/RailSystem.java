@@ -6,7 +6,7 @@ import org.xml.sax.SAXException;
 import util.AddRailLines;
 import util.graph.GraphGenerator;
 import util.graph.GraphObjectGenerator;
-import util.ObjectParser;
+import util.FileParser;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -17,12 +17,12 @@ import java.util.ArrayList;
 
 /*Code references:
 * https://graphstream-project.org/doc/
-* https://www.baeldung.com/jaxb
+* https://www.tutorialspoint.com/java_xml/java_dom_parse_document.htm
 * https://www.geeksforgeeks.org/java-program-to-extract-content-from-a-xml-document/
 * https://stackoverflow.com/questions/3694380/calculating-distance-between-two-points-using-latitude-longitude
 * https://www.geodatasource.com/resources/tutorials/how-to-calculate-the-distance-between-2-locations-using-java
 * https://www.geeksforgeeks.org/haversine-formula-to-find-distance-between-two-points-on-a-sphere/
-* https://graphstream-project.org/doc/Algorithms/Shortest-path/Dijkstra/#:~:text=Dijkstra's%20algorithm%20computes%20the%20shortest,works%20only%20for%20nonnegative%20lengths
+* https://graphstream-project.org/doc/Algorithms/Shortest-path/Dijkstra/
 * */
 
 public class RailSystem {
@@ -45,7 +45,7 @@ public class RailSystem {
             return;
         }
 
-        ObjectParser parser = new ObjectParser();
+        FileParser parser = new FileParser();
         GraphObjectGenerator graphObjectGenerator = new GraphObjectGenerator();
         GraphGenerator graphGenerator = new GraphGenerator(graphObjectGenerator);
         UserControl userControl = new UserControl(graphGenerator);

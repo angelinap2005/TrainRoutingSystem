@@ -10,7 +10,11 @@ import org.graphstream.ui.view.Viewer;
 import dto.Route;
 import dto.Station;
 
-/* code from https://graphstream-project.org/doc/ documentation*/
+/*For graph generation, code was taken from
+* https://graphstream-project.org/doc/Tutorials/Getting-Started/
+* https://graphstream-project.org/doc/Tutorials/Graph-Visualisation/
+* https://stackoverflow.com/questions/67331322/show-the-names-of-nodes-and-edges-using-graphstream-in-scala
+*/
 @Getter
 @Setter
 public class GraphGenerator {
