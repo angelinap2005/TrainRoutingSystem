@@ -9,6 +9,7 @@ import java.util.ArrayList;
 public class Station {
     private RailStation railStation;
     private ArrayList<Route> routes;
+    private String nodeId;
 
     public Station(RailStation railStation, ArrayList<Route> routes) {
         this.railStation = railStation;

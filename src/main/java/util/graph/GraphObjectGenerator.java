@@ -21,25 +21,31 @@ public class GraphObjectGenerator {
     private List<Station> stations;
     private Map<String, List<RailStation>> lineToStationsMap;
     private Map<String, Map<String, Double>> stationDistances;
+    private ArrayList<String> railLinesNames;
+    private ArrayList<RailLine> railLines;
+    private ArrayList<RailStation> railStations;
 
-    public GraphObjectGenerator() {
+    public GraphObjectGenerator(ArrayList<RailLine> railLines, ArrayList<RailStation> railStations, ArrayList<String> railLinesNames) {
         routes = new ArrayList<>();
         stations = new ArrayList<>();
         lineToStationsMap = new HashMap<>();
         stationDistances = new HashMap<>();
+        this.railLines = railLines;
+        this.railStations = railStations;
+        this.railLinesNames = railLinesNames;
     }
 
-    public void controller(ArrayList<RailLine> railLines, ArrayList<RailStation> railStations) {
+    public void controller() {
         try {
-            buildStationMaps(railLines, railStations);
-            generateStationNetwork(railStations);
+            buildStationMaps();
+            generateStationNetwork();
             calculateStationDistances();
         } catch (Exception e) {
             System.err.println("Error in controller: " + e.getMessage());
         }
     }
 
-    private void buildStationMaps(ArrayList<RailLine> railLines, ArrayList<RailStation> railStations) {
+    private void buildStationMaps() {
         lineToStationsMap.clear();
         stationDistances.clear();
 
@@ -55,7 +61,7 @@ public class GraphObjectGenerator {
         return allStations.stream().filter(station -> station != null && station.getRailLines() != null && station.getRailLines().stream().anyMatch(rl -> rl != null && rl.getName() != null && rl.getName().equals(line.getName()))).toList();
     }
 
-    private void generateStationNetwork(ArrayList<RailStation> railStations) {
+    private void generateStationNetwork() {
         stations.clear();
         routes.clear();
 

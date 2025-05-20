@@ -46,19 +46,19 @@ public class RailSystem {
         }
 
         FileParser parser = new FileParser();
-        GraphObjectGenerator graphObjectGenerator = new GraphObjectGenerator();
-        GraphGenerator graphGenerator = new GraphGenerator(graphObjectGenerator);
-        UserControl userControl = new UserControl(graphGenerator);
         parser.traverse(parseDoc(railLinesPath));
         parser.traverse(parseDoc(railStationsPath));
 
         //set rail lines
         setRailLines(parser.getRailLines(), parser.getRailStations());
         //generate graph objects
-        graphObjectGenerator.controller(parser.getRailLines(), parser.getRailStations());
+        GraphObjectGenerator graphObjectGenerator = new GraphObjectGenerator(parser.getRailLines(), parser.getRailStations(), parser.getRailLinesNames());
+        graphObjectGenerator.controller();
         //generate graph
+        GraphGenerator graphGenerator = new GraphGenerator(graphObjectGenerator);
         graphGenerator.generateGraph(graphObjectGenerator.getStations());
         //pass to user control
+        UserControl userControl = new UserControl(graphGenerator);
         userControl.start();
     }
 

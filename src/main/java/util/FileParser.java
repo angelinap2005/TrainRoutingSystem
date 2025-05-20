@@ -13,9 +13,15 @@ import java.util.ArrayList;
 */
 @Getter
 public class FileParser {
-    private ArrayList<RailLine> railLines = new ArrayList<>();
-    private ArrayList<RailStation> railStations = new ArrayList<>();
+    private ArrayList<RailLine> railLines;
+    private ArrayList<RailStation> railStations;
+    private ArrayList<String> railLinesNames;
 
+    public FileParser() {
+        this.railLines = new ArrayList<>();
+        this.railStations = new ArrayList<>();
+        this.railLinesNames = new ArrayList<>();
+    }
     public void traverse(Document doc) {
         Element kmlElement = (Element) doc.getElementsByTagName("kml").item(0);
         Element documentElement = (Element) kmlElement.getElementsByTagName("Document").item(0);
@@ -43,6 +49,9 @@ public class FileParser {
                 String[] coordinatesArray = coordinates.split(",");
                 railLine.setCoordinates(coordinatesArray);
                 railLines.add(railLine);
+                if (!railLinesNames.contains(railLine.getName().split(" - ")[0].trim())) {
+                    railLinesNames.add(railLine.getName().split(" - ")[0].trim());
+                }
             }
         }
     }
