@@ -23,7 +23,10 @@ import java.util.ArrayList;
 * https://www.geodatasource.com/resources/tutorials/how-to-calculate-the-distance-between-2-locations-using-java
 * https://www.geeksforgeeks.org/haversine-formula-to-find-distance-between-two-points-on-a-sphere/
 * https://graphstream-project.org/doc/Algorithms/Shortest-path/Dijkstra/
-* */
+* https://graphstream-project.org/doc/Tutorials/Storing-retrieving-and-displaying-data-in-graphs/#an-example-using-attributes-and-the-viewer
+* https://favtutor.com/blogs/breadth-first-search-java
+* https://www.geeksforgeeks.org/breadth-first-search-or-bfs-for-a-graph/
+*/
 
 public class RailSystem {
 

@@ -2,7 +2,7 @@ package util.graph;
 
 import dto.Station;
 
-import java.util.List;
+import java.util.*;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +11,11 @@ import org.graphstream.algorithm.Dijkstra;
 
 /*For shortest path calculations, code taken from:
 * https://graphstream-project.org/doc/Algorithms/Shortest-path/Dijkstra/
+*
+* For BFS algorithm, code taken from:
+* https://graphstream-project.org/doc/Tutorials/Storing-retrieving-and-displaying-data-in-graphs/#an-example-using-attributes-and-the-viewer
+* https://favtutor.com/blogs/breadth-first-search-java
+* https://www.geeksforgeeks.org/breadth-first-search-or-bfs-for-a-graph/
 */
 
 @Setter
@@ -89,5 +94,111 @@ public class RouteGenerator{
                 node.setAttribute("ui.style", "fill-color: #FFA500;");
             }
         });
+    }
+
+
+    public void calculateLeastStationStops(){
+        String startNodeName = startStation.getRailStation().getName();
+        Node startNode = graph.getNode(startNodeName);
+        String endNodeName = endStation.getRailStation().getName();
+        Node endNode = graph.getNode(endNodeName);
+
+        resetGraphEdges();
+        List<Node> shortestPath = explore(startNode, endNode);
+
+        if (shortestPath != null && shortestPath.size() > 0) {
+            //create path object
+            Path leastStops = new Path();
+
+            //intialise path with start node
+            leastStops.setRoot(shortestPath.get(0));
+
+            //style start and end nodes
+            startNode.setAttribute("ui.style", "fill-color: green;");
+            endNode.setAttribute("ui.style", "fill-color: red;");
+
+            //add each node to the path
+            for (int i = 0; i < shortestPath.size() - 1; i++) {
+                Node current = shortestPath.get(i);
+                Node next = shortestPath.get(i + 1);
+
+                //find edge connecting the two nodes
+                Edge connectingEdge = null;
+                for (Edge edge : current.edges().toList()) {
+                    if (edge.getOpposite(current).equals(next)) {
+                        connectingEdge = edge;
+                        //highlight the edge
+                        edge.setAttribute("ui.style", "fill-color: #FF0000; size: 3px;");
+                        break;
+                    }
+                }
+
+                if (connectingEdge != null) {
+                    //add edge to path
+                    leastStops.add(connectingEdge);
+
+                    //style the nodes
+                    if (next != endNode) {
+                        next.setAttribute("ui.style", "fill-color: #FFA500;");
+                    }
+                }
+            }
+
+            System.out.println("\nShortest path found:");
+            System.out.println("Number of stops: " + (shortestPath.size() - 1));
+            System.out.println("Route: ");
+            shortestPath.forEach(node -> System.out.println("  -> " + node.getId()));
+        } else {
+            System.out.println("No path found between " + startNodeName + " and " + endNodeName);
+        }
+    }
+
+    private List<Node> explore(Node source, Node destination) {
+        Queue<Node> queue = new LinkedList<>();
+        Set<Node> visited = new HashSet<>();
+        Map<Node, Node> predecessors = new HashMap<>();
+
+        //start BFS from the source node
+        queue.add(source);
+        visited.add(source);
+
+        while (!queue.isEmpty()) {
+            Node current = queue.poll();
+
+            //check if destination has been reached
+            if (current.equals(destination)) {
+                return reconstructPath(predecessors, source, destination);
+            }
+
+            //explore all neighbors of the current node
+            for (Edge edge : current) {
+                Node neighbor = edge.getOpposite(current);
+                if (!visited.contains(neighbor)) {
+                    visited.add(neighbor);
+                    queue.add(neighbor);
+                    predecessors.put(neighbor, current);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private List<Node> reconstructPath(Map<Node, Node> predecessors, Node source, Node destination) {
+        List<Node> path = new ArrayList<>();
+        Node current = destination;
+
+        //build path from destination to source
+        while (current != null && !current.equals(source)) {
+            path.add(0, current);
+            current = predecessors.get(current);
+        }
+
+        //add source to path
+        if (current != null) {
+            path.add(0, source);
+        }
+
+        return path;
     }
 }

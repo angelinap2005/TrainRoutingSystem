@@ -178,7 +178,7 @@ public class GraphGenerator {
             if(shortestRoute){
                 routeGenerator.calculateShortestRoute();
             }else{
-                //route with the fewest stops
+                routeGenerator.calculateLeastStationStops();
             }
         }
     }
