@@ -90,19 +90,4 @@ public class RouteGenerator{
             }
         });
     }
-
-    public void calculateLeastStopsRoute() {
-        String startNodeName = startStation.getRailStation().getName();
-        Node startNode = graph.getNode(startNodeName);
-        String endNodeName = endStation.getRailStation().getName();
-        Node endNode = graph.getNode(endNodeName);
-
-        resetGraphEdges();
-
-        dijkstra.init(graph);
-        if (startNode == null || endNode == null) {
-            System.err.println("No nodes found");
-            return;
-        }
-    }
 }

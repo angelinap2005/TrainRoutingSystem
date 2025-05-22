@@ -1,8 +1,8 @@
 package util.graph;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
+import dto.RailLine;
 import lombok.Getter;
 import lombok.Setter;
 import org.graphstream.graph.*;
@@ -70,19 +70,14 @@ public class GraphGenerator {
     private void addNodes(List<Station> stations) {
         for (Station station : stations) {
             if (isValidStation(station)) {
-                List<String> lineNames = station.getRailStation().getRailLines().stream().map(railLine -> railLine.getName().split(" - ")[0].trim()).distinct().collect(Collectors.toList());
-
-                String stationName = station.getRailStation().getName();
-                //create a unique node ID based on the station name and line name
-                String nodeId = lineNames.isEmpty() ? stationName : stationName + "_" + String.join("_", lineNames);
-
+                String nodeName = station.getRailStation().getName();
                 try {
-                    //add node by id to graph
-                    Node node = graph.addNode(nodeId);
-                    node.setAttribute("ui.label", stationName);
-                    station.setNodeId(nodeId);
+                    Node node = graph.addNode(nodeName);
+                    //set the node label to station name
+                    node.setAttribute("ui.label", nodeName);
                 } catch (IdAlreadyInUseException e) {
-                    System.err.println("Node " + nodeId + " already exists");
+                    //if node already exists, ignore
+                    System.err.println("Node " + nodeName + " already exists");
                 }
             }
         }
@@ -92,23 +87,16 @@ public class GraphGenerator {
         for (Station station : stations) {
             if (!isValidStation(station)) continue;
 
-            String sourceNodeId = station.getNodeId();
+            String sourceStation = station.getRailStation().getName();
 
             for (Route route : station.getRoutes()) {
                 try {
                     if (isValidRoute(route)) {
                         String destStation = route.getDestination().getName();
-                        //get the destination station object
-                        Optional<Station> destStationObj = stations.stream().filter(s -> s.getRailStation().getName().equals(destStation)).findFirst();
-
-                        if (destStationObj.isPresent()) {
-                            //create a unique node ID based on the destination station name and line name
-                            String destNodeId = destStationObj.get().getNodeId();
-                            addEdgeSafely(sourceNodeId, destNodeId);
-                        }
+                        addEdgeSafely(sourceStation, destStation);
                     }
                 } catch (Exception e) {
-                    System.err.println("Error processing route from " + station.getRailStation().getName() + ": " + e.getMessage());
+                    System.err.println("Error processing route from " + sourceStation + ": " + e.getMessage());
                 }
             }
         }

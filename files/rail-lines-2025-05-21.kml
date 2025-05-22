@@ -12030,19 +12030,19 @@
       </LineString>
     </Placemark>
     <Placemark>
-      <name>Weaver - Bethnal Green to Cambridge Heath</name>
+      <name>Weaver - Bethnal Green Rail to Cambridge Heath</name>
       <styleUrl>#whiteLine</styleUrl>
       <LineString>
-        <coordinates>-0.05539211145016204,51.527191653122124,2
+        <coordinates>-0.060014,51.524283,0
 -0.0572032006374023,51.5320596731624,2
 </coordinates>
       </LineString>
     </Placemark>
     <Placemark>
-      <name>Weaver - Bethnal Green to Cambridge Heath</name>
+      <name>Weaver - Bethnal Green Rail to Cambridge Heath</name>
       <styleUrl>#Weaver</styleUrl>
       <LineString>
-        <coordinates>-0.05539211145016204,51.527191653122124,1
+        <coordinates>-0.060014,51.524283,0
 -0.0572032006374023,51.5320596731624,1
 </coordinates>
       </LineString>
@@ -12210,20 +12210,20 @@
       </LineString>
     </Placemark>
     <Placemark>
-      <name>Weaver - Liverpool Street to Bethnal Green</name>
+      <name>Weaver - Liverpool Street to Bethnal Green Rail</name>
       <styleUrl>#whiteLine</styleUrl>
       <LineString>
         <coordinates>-0.08224962188885442,51.51759813225402,2
--0.05539211145016204,51.527191653122124,2
+-0.060014,51.524283,0
 </coordinates>
       </LineString>
     </Placemark>
     <Placemark>
-      <name>Weaver - Liverpool Street to Bethnal Green</name>
+      <name>Weaver - Liverpool Street to Bethnal Green Rail</name>
       <styleUrl>#Weaver</styleUrl>
       <LineString>
         <coordinates>-0.08224962188885442,51.51759813225402,1
--0.05539211145016204,51.527191653122124,1
+-0.060014,51.524283,0
 </coordinates>
       </LineString>
     </Placemark>
