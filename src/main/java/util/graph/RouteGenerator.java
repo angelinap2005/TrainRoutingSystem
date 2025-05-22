@@ -40,7 +40,7 @@ public class RouteGenerator{
         graph.setAttribute("ui.stylesheet", "node { size: 10px; fill-color: #666666; text-size: 14; }" + "edge { size: 2px; fill-color: #333333; }");
     }
 
-    public void calculateShortestRoute() {
+    public boolean calculateShortestRoute() {
         String startNodeName = startStation.getRailStation().getName();
         Node startNode = graph.getNode(startNodeName);
         String endNodeName = endStation.getRailStation().getName();
@@ -51,7 +51,7 @@ public class RouteGenerator{
         dijkstra.init(graph);
         if (startNode == null || endNode == null) {
             System.err.println("No nodes found");
-            return;
+            return false;
         }
 
         dijkstra.setSource(startNode);
@@ -69,6 +69,7 @@ public class RouteGenerator{
         } else {
             System.out.println("No path found between " + startNodeName + " and " + endNodeName);
         }
+        return path != null;
     }
 
     public void displayRoute(){
@@ -97,7 +98,7 @@ public class RouteGenerator{
     }
 
 
-    public void calculateLeastStationStops(){
+    public boolean calculateLeastStationStops(){
         String startNodeName = startStation.getRailStation().getName();
         Node startNode = graph.getNode(startNodeName);
         String endNodeName = endStation.getRailStation().getName();
@@ -151,6 +152,7 @@ public class RouteGenerator{
         } else {
             System.out.println("No path found between " + startNodeName + " and " + endNodeName);
         }
+        return shortestPath != null;
     }
 
     private List<Node> explore(Node source, Node destination) {

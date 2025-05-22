@@ -43,28 +43,40 @@ public class UserControl {
     }
 
     private void planRoute(){
+        boolean success = false;
         System.out.println("Please enter the name of the starting station: ");
         String start = scanner.nextLine();
+        if(start == null || start.length() == 0){
+            System.out.println("Please enter a valid station name.");
+            return;
+        }
         System.out.println("Please enter the name of the destination station: ");
         String end = scanner.nextLine();
-
+        if(end == null || end.length() == 0){
+            System.out.println("Please enter a valid station name.");
+            return;
+        }
         System.out.println("Would you like to view the shortest route or route with the least amount of stops? (shortest/least) ");
         String decision = scanner.nextLine();
         if(decision != null || decision.length() > 0){
             if(decision.equals("shortest")){
-                graphGenerator.planRoute(start, end,true);
+                success = graphGenerator.planRoute(start, end,true);
             }
             if(decision.equals("least")){
-                graphGenerator.planRoute(start, end,false);
+                success = graphGenerator.planRoute(start, end,false);
             }
         }
 
-        System.out.println("Would you like to view the map of the route? (y/n) ");
-        String input = scanner.nextLine();
-        if(input != null || input.length() > 0){
-            if(input.equals("y")){
-                graphGenerator.printRoute();
+        if(success){
+            System.out.println("Would you like to view the map of the route? (y/n) ");
+            String input = scanner.nextLine();
+            if(input != null || input.length() > 0){
+                if(input.equals("y")){
+                    graphGenerator.printRoute();
+                }
             }
+        }else{
+            System.out.println("No route found between " + start + " and " + end);
         }
     }
 }

@@ -156,10 +156,11 @@ public class GraphGenerator {
     }
 
 
-    public void planRoute(String start, String end, boolean shortestRoute) {
+    public boolean planRoute(String start, String end, boolean shortestRoute) {
         Station startStation = null;
         Station endStation = null;
         List<Station> stations = getGraphObjectGenerator().getStations();
+        boolean success = false;
 
         //check that the start and end stations are valid
         for(Station station : stations) {
@@ -173,14 +174,16 @@ public class GraphGenerator {
 
         if(startStation == null || endStation == null) {
             System.out.println("Invalid start or end station");
+
         } else {
             routeGenerator = new RouteGenerator(stations, startStation, endStation, graph);
             if(shortestRoute){
-                routeGenerator.calculateShortestRoute();
+                success = routeGenerator.calculateShortestRoute();
             }else{
-                routeGenerator.calculateLeastStationStops();
+                success = routeGenerator.calculateLeastStationStops();
             }
         }
+        return success;
     }
 
     public void printRoute(){
