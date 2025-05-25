@@ -68,6 +68,9 @@ public class UserControl {
             if(decision.equals("least")){
                 success = graphGenerator.planRoute(start, end,false, aStar);
             }
+        }else{
+            System.out.println("Please enter a valid option.");
+            return;
         }
 
         if(success){
