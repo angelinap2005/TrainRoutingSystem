@@ -346,7 +346,6 @@ public class RouteGenerator{
         String endNodeName = endStation.getRailStation().getName();
         Node endNode = graph.getNode(endNodeName);
         Map<Node, Double> gScore = new HashMap<>();
-        //estimated cost from start to end through current node (fScore)
         Map<Node, Double> fScore = new HashMap<>();
 
         resetGraphEdges();
@@ -356,8 +355,7 @@ public class RouteGenerator{
             return false;
         }
 
-        // A* algorithm for finding path with least number of stops
-        // Priority queue orders nodes by f-score (g + h)
+        //priority queue for open set (nodes to be evaluated)
         for (Node node : graph) {
             gScore.put(node, Double.MAX_VALUE);
             fScore.put(node, Double.MAX_VALUE);
@@ -366,7 +364,7 @@ public class RouteGenerator{
         Map<Node, Node> predecessors = new HashMap<>();
         Set<Node> closedSet = new HashSet<>();
 
-        // Initialize scores
+        //initialise scores
         for (Node node : graph) {
             gScore.put(node, Double.MAX_VALUE);
         }
@@ -380,20 +378,20 @@ public class RouteGenerator{
                 List<Node> shortestPath = reconstructPath(predecessors, startNode, endNode);
 
                 if (shortestPath.size() > 0) {
-                    // Create path object
+                    //create path object
                     Path leastStops = new Path();
                     leastStops.setRoot(shortestPath.get(0));
 
-                    // Style start and end nodes
+                    //style start and end nodes
                     startNode.setAttribute("ui.style", "fill-color: green;");
                     endNode.setAttribute("ui.style", "fill-color: red;");
 
-                    // Add each node to the path and style edges
+                    //add each node to the path
                     for (int i = 0; i < shortestPath.size() - 1; i++) {
                         Node currentNode = shortestPath.get(i);
                         Node nextNode = shortestPath.get(i + 1);
 
-                        // Find edge connecting the two nodes
+                        //find edge connecting the two nodes
                         Edge connectingEdge = null;
                         for (Edge edge : currentNode.edges().toList()) {
                             if (edge.getOpposite(currentNode).equals(nextNode)) {
@@ -423,7 +421,7 @@ public class RouteGenerator{
 
             closedSet.add(current);
 
-            // Check all neighbors
+            //check all neighbors
             for (Edge edge : current.edges().toList()) {
                 Node neighbor = edge.getOpposite(current);
 
@@ -431,18 +429,18 @@ public class RouteGenerator{
                     continue;
                 }
 
-                // Calculate new g-score (just number of stops + 1)
+                //calculate tentative gScore
                 double tentativeGScore = gScore.get(current) + 1;
 
                 if (tentativeGScore < gScore.get(neighbor)) {
-                    // This path is better
+                    //this path to neighbor is better
                     predecessors.put(neighbor, current);
                     gScore.put(neighbor, tentativeGScore);
 
                     if (!openSet.contains(neighbor)) {
                         openSet.add(neighbor);
                     } else {
-                        // Update priority in queue by removing and re-adding
+                        //update the priority queue
                         openSet.remove(neighbor);
                         openSet.add(neighbor);
                     }
