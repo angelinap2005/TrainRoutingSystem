@@ -31,14 +31,12 @@ public class RouteGenerator{
     private Station startStation;
     private Station endStation;
     private Graph graph;
-    private Dijkstra dijkstra;
 
     public RouteGenerator(List<Station> stations, Station startStation, Station endStation, Graph graph) {
         this.stations = stations;
         this.startStation = startStation;
         this.endStation = endStation;
         this.graph = graph;
-        dijkstra = new Dijkstra(Dijkstra.Element.EDGE, null, "length");
         System.setProperty("org.graphstream.ui", "swing");
         System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
         graph.setAttribute("ui.quality");
@@ -47,6 +45,7 @@ public class RouteGenerator{
     }
 
     public boolean calculateShortestRoute() {
+        Dijkstra dijkstra = new Dijkstra(Dijkstra.Element.EDGE, null, "length");
         Timestamp start = new Timestamp(System.currentTimeMillis());
         String startNodeName = startStation.getRailStation().getName();
         Node startNode = graph.getNode(startNodeName);
