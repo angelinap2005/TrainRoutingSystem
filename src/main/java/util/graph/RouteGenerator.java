@@ -22,6 +22,7 @@ import org.graphstream.algorithm.Dijkstra;
 * https://www.geeksforgeeks.org/a-search-algorithm/
 * https://www.baeldung.com/java-a-star-pathfinding
 * https://codegym.cc/groups/posts/a-search-algorithm-in-java
+* https://www.geeksforgeeks.org/euclidean-distance
 */
 
 @Setter
@@ -118,14 +119,13 @@ public class RouteGenerator{
 
         if (shortestPath != null && shortestPath.size() > 0) {
             //create path object
-            Path leastStops = new Path();
+            Path path = new Path();
 
             //intialise path with start node
-            leastStops.setRoot(shortestPath.get(0));
+            path.setRoot(shortestPath.get(0));
 
             //style start and end nodes
-            startNode.setAttribute("ui.style", "fill-color: green;");
-            endNode.setAttribute("ui.style", "fill-color: red;");
+            setNodeStyle(startNode, endNode, path);
 
             //add each node to the path
             for (int i = 0; i < shortestPath.size() - 1; i++) {
@@ -145,7 +145,7 @@ public class RouteGenerator{
 
                 if (connectingEdge != null) {
                     //add edge to path
-                    leastStops.add(connectingEdge);
+                    path.add(connectingEdge);
 
                     //style the nodes
                     if (next != endNode) {
@@ -221,14 +221,6 @@ public class RouteGenerator{
         Node startNode = graph.getNode(startNodeName);
         String endNodeName = endStation.getRailStation().getName();
         Node endNode = graph.getNode(endNodeName);
-
-        resetGraphEdges();
-
-        if (startNode == null || endNode == null) {
-            System.err.println("No nodes found");
-            return false;
-        }
-
         //A* starting setup
         //cost from start to current node (gScore)
         Map<Node, Double> gScore = new HashMap<>();
@@ -238,6 +230,13 @@ public class RouteGenerator{
         Set<Node> closedSet = new HashSet<>();
         //priority queue for open set (nodes to be evaluated)
         PriorityQueue<Node> openSet = new PriorityQueue<>(Comparator.comparingDouble(node -> fScore.getOrDefault(node, Double.MAX_VALUE)));
+
+        resetGraphEdges();
+
+        if (startNode == null || endNode == null) {
+            System.err.println("No nodes found");
+            return false;
+        }
 
         //initialise scores for all nodes
         for (Node node : graph) {
@@ -257,7 +256,7 @@ public class RouteGenerator{
                 Path path = reconstructPathAStar(cameFrom, startNode, endNode);
                 setNodeStyle(startNode, endNode, path);
                 Timestamp end = new Timestamp(System.currentTimeMillis());
-                System.out.println("A* calculation completed in " + (end.getTime() - start.getTime()) + " ms");
+                System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
                 System.out.println("\nShortest path found:");
                 System.out.printf("Total distance: %.2f km%n", gScore.get(endNode));
                 System.out.println("Route: ");
@@ -302,13 +301,30 @@ public class RouteGenerator{
 
     //heuristic function for A* algorithm
     private double heuristicCost(Node from, Node to) {
+        Station startStation = null;
+        Station endStation = null;
+        for(Station station : stations){
+            if(station.getRailStation().getName().equals(from.getId())) {
+                startStation = station;
+            } else if(station.getRailStation().getName().equals(to.getId())) {
+                endStation = station;
+            }
+        }
+
         //if nodes have x and y attributes, calculate Euclidean distance
-        if (from.hasAttribute("x") && from.hasAttribute("y") && to.hasAttribute("x") && to.hasAttribute("y")) {
-            double x1 = from.getAttribute("x", Double.class);
-            double y1 = from.getAttribute("y", Double.class);
-            double x2 = to.getAttribute("x", Double.class);
-            double y2 = to.getAttribute("y", Double.class);
-            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        if(startStation != null && endStation != null){
+            if (startStation.getRailStation().getCoordinates()[0] != null && startStation.getRailStation().getCoordinates()[1] != null && endStation.getRailStation().getCoordinates()[0] != null && endStation.getRailStation().getCoordinates()[1] != null) {
+                double x1 = Double.parseDouble(startStation.getRailStation().getCoordinates()[0]);
+                double y1 = Double.parseDouble(startStation.getRailStation().getCoordinates()[1]);
+                double x2 = Double.parseDouble(endStation.getRailStation().getCoordinates()[0]);
+                double y2 = Double.parseDouble(endStation.getRailStation().getCoordinates()[1]);
+                return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            }else{
+                System.err.println("Coordinates for station " + from.getId() + " or station " + to.getId() + " are not available.");
+                return 0.0;
+            }
+        }else{
+            System.err.println("Station " + from.getId() + "or station " + to.getId() + " not found in the list of stations.");
         }
         //fallback to 0.0 if coordinates are not available
         return 0.0;
@@ -339,13 +355,14 @@ public class RouteGenerator{
     }
 
     public boolean calculateLeastStationStopsAStar() {
+        if (startStation == null || endStation == null) {
+            return false;
+        }
         Timestamp start = new Timestamp(System.currentTimeMillis());
         String startNodeName = startStation.getRailStation().getName();
         Node startNode = graph.getNode(startNodeName);
         String endNodeName = endStation.getRailStation().getName();
         Node endNode = graph.getNode(endNodeName);
-        Map<Node, Double> gScore = new HashMap<>();
-        Map<Node, Double> fScore = new HashMap<>();
 
         resetGraphEdges();
 
@@ -354,100 +371,17 @@ public class RouteGenerator{
             return false;
         }
 
-        //priority queue for open set (nodes to be evaluated)
-        for (Node node : graph) {
-            gScore.put(node, Double.MAX_VALUE);
-            fScore.put(node, Double.MAX_VALUE);
-        }
-        PriorityQueue<Node> openSet = new PriorityQueue<>(Comparator.comparingDouble(node -> fScore.getOrDefault(node, Double.MAX_VALUE)));
-        Map<Node, Node> predecessors = new HashMap<>();
-        Set<Node> closedSet = new HashSet<>();
+        // Setup data structures
+        PriorityQueue<Station> queue = new PriorityQueue<>(Comparator.comparingDouble(station ->
+                Arrays.stream(getStations().get(0).getRailStation().getCoordinates()).count() + heuristicCost(startNode, endNode)));
 
-        //initialise scores
-        for (Node node : graph) {
-            gScore.put(node, Double.MAX_VALUE);
-        }
-        gScore.put(startNode, 0.0);
-        openSet.add(startNode);
+        Set<Station> visited = new HashSet<>();
+        Map<Station, Station> parentMap = new HashMap<>();
+        Map<Station, Double> costSoFar = new HashMap<>();
 
-        while (!openSet.isEmpty()) {
-            Node current = openSet.poll();
-
-            if (current.equals(endNode)) {
-                List<Node> shortestPath = reconstructPath(predecessors, startNode, endNode);
-
-                if (shortestPath.size() > 0) {
-                    //create path object
-                    Path leastStops = new Path();
-                    leastStops.setRoot(shortestPath.get(0));
-
-                    //style start and end nodes
-                    startNode.setAttribute("ui.style", "fill-color: green;");
-                    endNode.setAttribute("ui.style", "fill-color: red;");
-
-                    //add each node to the path
-                    for (int i = 0; i < shortestPath.size() - 1; i++) {
-                        Node currentNode = shortestPath.get(i);
-                        Node nextNode = shortestPath.get(i + 1);
-
-                        //find edge connecting the two nodes
-                        Edge connectingEdge = null;
-                        for (Edge edge : currentNode.edges().toList()) {
-                            if (edge.getOpposite(currentNode).equals(nextNode)) {
-                                connectingEdge = edge;
-                                edge.setAttribute("ui.style", "fill-color: #FF0000; size: 3px;");
-                                break;
-                            }
-                        }
-
-                        if (connectingEdge != null) {
-                            leastStops.add(connectingEdge);
-                            if (nextNode != endNode) {
-                                nextNode.setAttribute("ui.style", "fill-color: #FFA500;");
-                            }
-                        }
-                    }
-
-                    Timestamp end = new Timestamp(System.currentTimeMillis());
-                    System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
-                    System.out.println("\nRoute with least about of stops found:");
-                    System.out.println("Number of stops: " + (shortestPath.size() - 1));
-                    System.out.println("Route: ");
-                    shortestPath.forEach(node -> System.out.println("  -> " + node.getId()));
-                    return true;
-                }
-            }
-
-            closedSet.add(current);
-
-            //check all neighbors
-            for (Edge edge : current.edges().toList()) {
-                Node neighbor = edge.getOpposite(current);
-
-                if (closedSet.contains(neighbor)) {
-                    continue;
-                }
-
-                //calculate tentative gScore
-                double tentativeGScore = gScore.get(current) + 1;
-
-                if (tentativeGScore < gScore.get(neighbor)) {
-                    //this path to neighbor is better
-                    predecessors.put(neighbor, current);
-                    gScore.put(neighbor, tentativeGScore);
-
-                    if (!openSet.contains(neighbor)) {
-                        openSet.add(neighbor);
-                    } else {
-                        //update the priority queue
-                        openSet.remove(neighbor);
-                        openSet.add(neighbor);
-                    }
-                }
-            }
-        }
-
-        System.out.println("No path found between " + startNodeName + " and " + endNodeName);
+        // Initialize with start station
+        queue.add(startStation);
+        costSoFar.put(startStation, 0.0);
         return false;
     }
 }
