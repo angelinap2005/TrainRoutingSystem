@@ -137,8 +137,6 @@ public class RouteGenerator{
                 for (Edge edge : current.edges().toList()) {
                     if (edge.getOpposite(current).equals(next)) {
                         connectingEdge = edge;
-                        //highlight the edge
-                        edge.setAttribute("ui.style", "fill-color: #FF0000; size: 3px;");
                         break;
                     }
                 }
@@ -146,11 +144,6 @@ public class RouteGenerator{
                 if (connectingEdge != null) {
                     //add edge to path
                     path.add(connectingEdge);
-
-                    //style the nodes
-                    if (next != endNode) {
-                        next.setAttribute("ui.style", "fill-color: #FFA500;");
-                    }
                 }
             }
 
