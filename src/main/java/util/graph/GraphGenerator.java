@@ -2,7 +2,6 @@ package util.graph;
 
 import java.util.*;
 
-import dto.RailLine;
 import lombok.Getter;
 import lombok.Setter;
 import org.graphstream.graph.*;
@@ -31,13 +30,12 @@ public class GraphGenerator {
     }
 
     private void setSystemProperties() {
-        // Same system properties as RouteGenerator
+        //set graph attributes
         System.setProperty("org.graphstream.ui", "swing");
         System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
         this.graph = new SingleGraph("Train Graph");
         this.processedEdges = new HashSet<>();
 
-        // Match the exact same styling attributes as RouteGenerator
         graph.setAttribute("ui.quality");
         graph.setAttribute("ui.antialias");
         graph.setAttribute("ui.stylesheet", "node { size: 10px; fill-color: #666666; text-size: 14; }" + "edge { size: 2px; fill-color: #333333; }");
@@ -54,7 +52,6 @@ public class GraphGenerator {
             //clear the graph
             graph.clear();
             processedEdges.clear();
-
             //add graph nodes
             addNodes(stations);
             //add graph edges
@@ -103,10 +100,7 @@ public class GraphGenerator {
     }
 
     private boolean isValidStation(Station station) {
-        return station != null &&
-                station.getRailStation() != null &&
-                station.getRailStation().getName() != null &&
-                station.getRoutes() != null;
+        return station != null && station.getRailStation() != null && station.getRailStation().getName() != null && station.getRoutes() != null;
     }
 
     private boolean isValidRoute(Route route) {
@@ -140,19 +134,29 @@ public class GraphGenerator {
 
     public void printEntireMap() {
         try {
-            //set default node and edge styles
-            graph.edges().forEach(edge -> {
-                edge.setAttribute("ui.style", "fill-color: #333333;");
-            });
-            graph.nodes().forEach(node -> {
-                node.setAttribute("ui.style", "fill-color: #666666;");
-            });
-
+            setGraphStyles();
             Viewer viewer = graph.display();
             viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
         } catch (Exception e) {
             System.err.println("Error displaying graph: " + e.getMessage());
         }
+    }
+
+    private void setGraphStyles(){
+        //set default node and edge styles
+        graph.edges().forEach(edge -> {
+            edge.setAttribute("ui.style", "fill-color: #333333;");
+        });
+        graph.nodes().forEach(node -> {
+            node.setAttribute("ui.style", "fill-color: #666666;");
+        });
+
+        graph.edges().forEach(edge -> {
+            edge.setAttribute("ui.style", "fill-color: #333333;");
+        });
+        graph.nodes().forEach(node -> {
+            node.setAttribute("ui.style", "fill-color: #666666;");
+        });
     }
 
 
