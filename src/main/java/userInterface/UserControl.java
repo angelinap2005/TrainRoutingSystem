@@ -22,7 +22,8 @@ public class UserControl {
         System.out.println("Please select an option from the menu below: \n");
         System.out.println("1. View map of stations");
         System.out.println("2. Plan a route");
-        System.out.println("3. Exit");
+        System.out.println("3. Plan a route with the A* algorithm");
+        System.out.println("4. Exit");
 
         String input = scanner.nextLine();
         if(input != null || input.length() > 0){
@@ -30,9 +31,11 @@ public class UserControl {
                 viewStationMap();
             }
             if(input.equals("2")){
-                planRoute();
+                planRoute(false);
+            }if(input.equals("3")){
+                planRoute(true);
             }
-            if(input.equals("3")){
+            if(input.equals("4")){
                 System.exit(0);
             }
         }
@@ -42,7 +45,7 @@ public class UserControl {
         graphGenerator.printEntireMap();
     }
 
-    private void planRoute(){
+    private void planRoute(boolean aStar){
         boolean success = false;
         System.out.println("Please enter the name of the starting station: ");
         String start = scanner.nextLine();
@@ -60,10 +63,10 @@ public class UserControl {
         String decision = scanner.nextLine();
         if(decision != null || decision.length() > 0){
             if(decision.equals("shortest")){
-                success = graphGenerator.planRoute(start, end,true);
+                success = graphGenerator.planRoute(start, end,true, aStar);
             }
             if(decision.equals("least")){
-                success = graphGenerator.planRoute(start, end,false);
+                success = graphGenerator.planRoute(start, end,false, aStar);
             }
         }
 

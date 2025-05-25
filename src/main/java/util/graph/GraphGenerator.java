@@ -156,7 +156,7 @@ public class GraphGenerator {
     }
 
 
-    public boolean planRoute(String start, String end, boolean shortestRoute) {
+    public boolean planRoute(String start, String end, boolean shortestRoute, boolean aStar) {
         Station startStation = null;
         Station endStation = null;
         List<Station> stations = getGraphObjectGenerator().getStations();
@@ -177,10 +177,18 @@ public class GraphGenerator {
 
         } else {
             routeGenerator = new RouteGenerator(stations, startStation, endStation, graph);
-            if(shortestRoute){
-                success = routeGenerator.calculateShortestRoute();
-            }else{
-                success = routeGenerator.calculateLeastStationStops();
+            if (!aStar) {
+                if (shortestRoute) {
+                    success = routeGenerator.calculateShortestRoute();
+                } else {
+                    success = routeGenerator.calculateLeastStationStops();
+                }
+            } else {
+                if (shortestRoute) {
+                    success = routeGenerator.calculateShortestRouteAStar();
+                } else {
+                    success = routeGenerator.calculateLeastStationStopsAStar();
+                }
             }
         }
         return success;
