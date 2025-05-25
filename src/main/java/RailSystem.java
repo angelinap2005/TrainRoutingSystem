@@ -55,7 +55,7 @@ public class RailSystem {
         //set rail lines
         setRailLines(parser.getRailLines(), parser.getRailStations());
         //generate graph objects
-        GraphObjectGenerator graphObjectGenerator = new GraphObjectGenerator(parser.getRailLines(), parser.getRailStations(), parser.getRailLinesNames());
+        GraphObjectGenerator graphObjectGenerator = new GraphObjectGenerator(parser.getRailLines(), parser.getRailStations());
         graphObjectGenerator.controller();
         //generate graph
         GraphGenerator graphGenerator = new GraphGenerator(graphObjectGenerator);

@@ -17,39 +17,34 @@ import java.util.*;
 @Getter
 @Setter
 public class GraphObjectGenerator {
-    private List<Route> routes;
     private List<Station> stations;
     private Map<String, List<RailStation>> lineToStationsMap;
     private Map<String, Map<String, Double>> stationDistances;
-    private ArrayList<String> railLinesNames;
     private ArrayList<RailLine> railLines;
     private ArrayList<RailStation> railStations;
 
-    public GraphObjectGenerator(ArrayList<RailLine> railLines, ArrayList<RailStation> railStations, ArrayList<String> railLinesNames) {
-        routes = new ArrayList<>();
+    public GraphObjectGenerator(ArrayList<RailLine> railLines, ArrayList<RailStation> railStations) {
         stations = new ArrayList<>();
         lineToStationsMap = new HashMap<>();
         stationDistances = new HashMap<>();
         this.railLines = railLines;
         this.railStations = railStations;
-        this.railLinesNames = railLinesNames;
     }
 
     public void controller() {
         try {
             buildStationMaps();
             generateStationNetwork();
-            calculateStationDistances();
+            getStationDistance();
         } catch (Exception e) {
             System.err.println("Error in controller: " + e.getMessage());
         }
     }
 
     private void buildStationMaps() {
-        lineToStationsMap.clear();
-        stationDistances.clear();
 
         for (RailLine line : railLines) {
+            //ensure the line is not null and has a valid name
             if (line != null && line.getName() != null) {
                 List<RailStation> stationsOnLine = getStationsForLine(line, railStations);
                 lineToStationsMap.put(line.getName(), stationsOnLine);
@@ -62,9 +57,7 @@ public class GraphObjectGenerator {
     }
 
     private void generateStationNetwork() {
-        stations.clear();
-        routes.clear();
-
+        //iterate through each rail station and its associated rail lines
         for (RailStation currentStation : railStations) {
             if (currentStation == null || currentStation.getRailLines() == null) {
                 continue;
@@ -74,12 +67,14 @@ public class GraphObjectGenerator {
             ArrayList<Route> stationRoutes = new ArrayList<>();
 
             for (RailLine line : currentStation.getRailLines()) {
+                //ensure the line is not null and has a valid name
                 if (line == null || line.getName() == null) {
                     continue;
                 }
 
                 List<RailStation> connectedStations = findAdjacentStations(currentStation, line);
                 for (RailStation destinationStation : connectedStations) {
+                    //get the connection key for the current and destination stations
                     String connectionKey = getConnectionKey(currentStation.getName(), destinationStation.getName());
                     String reverseKey = getConnectionKey(destinationStation.getName(), currentStation.getName());
 
@@ -103,11 +98,12 @@ public class GraphObjectGenerator {
         }
     }
 
-    private void calculateStationDistances() {
+    private void getStationDistance() {
         for (Station station : stations) {
+            //ensure the station and its rail station are not null
             Map<String, Double> distances = new HashMap<>();
             stationDistances.put(station.getRailStation().getName(), distances);
-
+            //iterate through each route of the station
             for (Route route : station.getRoutes()) {
                 String destName = route.getDestination().getName();
                 distances.put(destName, route.getWeight());
@@ -122,12 +118,13 @@ public class GraphObjectGenerator {
         if (stationsOnLine == null || stationsOnLine.isEmpty()) {
             return adjacentStations;
         }
-
+        //find the index of the current station in the list of stations on the line
         int currentIndex = stationsOnLine.indexOf(station);
         if (currentIndex == -1) {
             return adjacentStations;
         }
 
+        //add the current station to the list of adjacent stations
         if (currentIndex > 0) {
             adjacentStations.add(stationsOnLine.get(currentIndex - 1));
         }
@@ -142,7 +139,7 @@ public class GraphObjectGenerator {
         try {
             String[] coords1 = station1.getCoordinates();
             String[] coords2 = station2.getCoordinates();
-
+            //turn coordinates into a double array
             if (coords1 != null && coords2 != null && coords1.length >= 2 && coords2.length >= 2) {
                 //convert strings to doubles
                 double lon1 = Double.parseDouble(coords1[0]);
@@ -172,9 +169,7 @@ public class GraphObjectGenerator {
 
         //apply Haversine formula
         double a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
-
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
         return Math.round(EARTH_RADIUS * c * 100.0) / 100.0; //round to 2 decimal places
     }
 
