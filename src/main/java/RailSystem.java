@@ -3,7 +3,6 @@ import dto.RailLine;
 import dto.RailStation;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
-import util.AddRailLines;
 import util.graph.GraphGenerator;
 import util.graph.GraphObjectGenerator;
 import util.FileParser;
@@ -75,7 +74,17 @@ public class RailSystem {
     }
 
     private static void setRailLines(ArrayList<RailLine> railLines, ArrayList<RailStation> railStations) {
-        AddRailLines addRailLines = new AddRailLines();
-        addRailLines.addLines(railLines, railStations);
+        for (RailStation station : railStations) {
+            ArrayList<RailLine> lines = new ArrayList<>();
+            String stationName = station.getName();
+
+            for (RailLine line : railLines) {
+                //check if the name of the line contains the name of the station
+                if (line.getName() != null && line.getName().contains(stationName)) {
+                    lines.add(line);
+                }
+            }
+            station.setRailLines(lines);
+        }
     }
 }
