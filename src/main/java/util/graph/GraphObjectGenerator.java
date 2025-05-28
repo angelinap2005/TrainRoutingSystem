@@ -137,17 +137,11 @@ public class GraphObjectGenerator {
 
     private double calculateDistance(RailStation station1, RailStation station2) {
         try {
-            String[] coords1 = station1.getCoordinates();
-            String[] coords2 = station2.getCoordinates();
-            //turn coordinates into a double array
-            if (coords1 != null && coords2 != null && coords1.length >= 2 && coords2.length >= 2) {
-                //convert strings to doubles
-                double lon1 = Double.parseDouble(coords1[0]);
-                double lat1 = Double.parseDouble(coords1[1]);
-                double lon2 = Double.parseDouble(coords2[0]);
-                double lat2 = Double.parseDouble(coords2[1]);
+            Double[] coords1 = station1.getCoordinates();
+            Double[] coords2 = station2.getCoordinates();
 
-                return haversineDistance(lat1, lon1, lat2, lon2);
+            if (coords1 != null && coords2 != null && coords1.length >= 2 && coords2.length >= 2) {
+                return haversineDistance(coords1[0], coords1[1], coords2[0], coords2[1]);
             }
         } catch (NumberFormatException e) {
             System.err.println("Error calculating distance between " + station1.getName() + " and " + station2.getName() + ": " + e.getMessage());

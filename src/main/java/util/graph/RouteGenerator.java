@@ -149,7 +149,7 @@ public class RouteGenerator{
 
             Timestamp end = new Timestamp(System.currentTimeMillis());
             System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
-            System.out.println("\nRoute with least about of stops found:");
+            System.out.println("\nRoute with least amount of stops found:");
             System.out.println("Number of stops: " + (shortestPath.size() - 1));
             System.out.println("Route: ");
             shortestPath.forEach(node -> System.out.println("  -> " + node.getId()));
@@ -293,31 +293,43 @@ public class RouteGenerator{
     }
 
     //heuristic function for A* algorithm
+
+    //heuristic function for A* algorithm
     private double heuristicCost(Node from, Node to) {
         Station startStation = null;
         Station endStation = null;
+
         for(Station station : stations){
             if(station.getRailStation().getName().equals(from.getId())) {
                 startStation = station;
-            } else if(station.getRailStation().getName().equals(to.getId())) {
+            }
+            if(station.getRailStation().getName().equals(to.getId())) {
                 endStation = station;
+            }
+
+            //early exit if both stations are found
+            if(startStation != null && endStation != null) {
+                break;
             }
         }
 
-        //if nodes have x and y attributes, calculate Euclidean distance
+        //if nodes have coordinates, calculate Euclidean distance
         if(startStation != null && endStation != null){
-            if (startStation.getRailStation().getCoordinates()[0] != null && startStation.getRailStation().getCoordinates()[1] != null && endStation.getRailStation().getCoordinates()[0] != null && endStation.getRailStation().getCoordinates()[1] != null) {
-                double x1 = Double.parseDouble(startStation.getRailStation().getCoordinates()[0]);
-                double y1 = Double.parseDouble(startStation.getRailStation().getCoordinates()[1]);
-                double x2 = Double.parseDouble(endStation.getRailStation().getCoordinates()[0]);
-                double y2 = Double.parseDouble(endStation.getRailStation().getCoordinates()[1]);
+            Double[] startCoords = startStation.getRailStation().getCoordinates();
+            Double[] endCoords = endStation.getRailStation().getCoordinates();
+
+            if (startCoords != null && startCoords.length >= 2 && endCoords != null && endCoords.length >= 2 && startCoords[0] != null && startCoords[1] != null && endCoords[0] != null && endCoords[1] != null) {
+                double x1 = startCoords[0];
+                double y1 = startCoords[1];
+                double x2 = endCoords[0];
+                double y2 = endCoords[1];
                 return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-            }else{
-                System.err.println("Coordinates for station " + from.getId() + " or station " + to.getId() + " are not available.");
-                return 0.0;
             }
-        }else{
-            System.err.println("Station " + from.getId() + "or station " + to.getId() + " not found in the list of stations.");
+        }
+
+        //only print error for missing stations if they are the actual start/end stations
+        if((from.getId().equals(startStation != null ? startStation.getRailStation().getName() : "") || to.getId().equals(endStation != null ? endStation.getRailStation().getName() : "")) && (startStation == null || endStation == null)) {
+            System.err.println("Station " + from.getId() + " or station " + to.getId() + " not found in the list of stations.");
         }
         //fallback to 0.0 if coordinates are not available
         return 0.0;
@@ -375,6 +387,7 @@ public class RouteGenerator{
         // Initialize with start station
         queue.add(startStation);
         costSoFar.put(startStation, 0.0);
+
         return false;
     }
 }
