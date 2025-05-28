@@ -45,6 +45,8 @@ public class RouteGenerator{
         graph.setAttribute("ui.stylesheet", "node { size: 10px; fill-color: #666666; text-size: 14; }" + "edge { size: 2px; fill-color: #333333; }");
     }
 
+    //normal calculation methods
+
     public boolean calculateShortestRoute() {
         Dijkstra dijkstra = new Dijkstra(Dijkstra.Element.EDGE, null, "length");
         Timestamp start = new Timestamp(System.currentTimeMillis());
@@ -80,32 +82,6 @@ public class RouteGenerator{
         }
         return path != null;
     }
-
-    public void displayRoute(){
-        graph.display();
-    }
-
-    private void resetGraphEdges(){
-        graph.edges().forEach(edge -> {
-            edge.setAttribute("ui.style", "fill-color: #333333;");
-        });
-        graph.nodes().forEach(node -> {
-            node.setAttribute("ui.style", "fill-color: #666666;");
-        });
-    }
-
-    private void setNodeStyle(Node startNode, Node endNode, Path path) {
-        startNode.setAttribute("ui.style", "fill-color: green;");
-        endNode.setAttribute("ui.style", "fill-color: red;");
-
-        path.edges().forEach(edge -> {edge.setAttribute("ui.style", "fill-color: #FF0000; size: 3px;");});
-        path.nodes().forEach(node -> {
-            if (node != startNode && node != endNode) {
-                node.setAttribute("ui.style", "fill-color: #FFA500;");
-            }
-        });
-    }
-
 
     public boolean calculateLeastStationStops(){
         Timestamp start = new Timestamp(System.currentTimeMillis());
@@ -208,6 +184,8 @@ public class RouteGenerator{
         return path;
     }
 
+    //A* methods
+
     public boolean calculateShortestRouteAStar() {
         Timestamp start = new Timestamp(System.currentTimeMillis());
         String startNodeName = startStation.getRailStation().getName();
@@ -291,8 +269,6 @@ public class RouteGenerator{
         System.out.println("No path found between " + startNodeName + " and " + endNodeName);
         return false;
     }
-
-    //heuristic function for A* algorithm
 
     //heuristic function for A* algorithm
     private double heuristicCost(Node from, Node to) {
@@ -389,5 +365,32 @@ public class RouteGenerator{
         costSoFar.put(startStation, 0.0);
 
         return false;
+    }
+
+    //general methods
+
+    public void displayRoute(){
+        graph.display();
+    }
+
+    private void resetGraphEdges(){
+        graph.edges().forEach(edge -> {
+            edge.setAttribute("ui.style", "fill-color: #333333;");
+        });
+        graph.nodes().forEach(node -> {
+            node.setAttribute("ui.style", "fill-color: #666666;");
+        });
+    }
+
+    private void setNodeStyle(Node startNode, Node endNode, Path path) {
+        startNode.setAttribute("ui.style", "fill-color: green;");
+        endNode.setAttribute("ui.style", "fill-color: red;");
+
+        path.edges().forEach(edge -> {edge.setAttribute("ui.style", "fill-color: #FF0000; size: 3px;");});
+        path.nodes().forEach(node -> {
+            if (node != startNode && node != endNode) {
+                node.setAttribute("ui.style", "fill-color: #FFA500;");
+            }
+        });
     }
 }
