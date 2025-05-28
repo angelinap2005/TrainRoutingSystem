@@ -38,16 +38,30 @@ public class RouteGenerator{
         this.startStation = startStation;
         this.endStation = endStation;
         this.graph = graph;
+        initializeGraphProperties();
+    }
+
+    private void initializeGraphProperties() {
         System.setProperty("org.graphstream.ui", "swing");
         System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
         graph.setAttribute("ui.quality");
         graph.setAttribute("ui.antialias");
-        graph.setAttribute("ui.stylesheet", "node { size: 10px; fill-color: #666666; text-size: 14; }" + "edge { size: 2px; fill-color: #333333; }");
+        graph.setAttribute("ui.stylesheet", 
+            "node { size: 10px; fill-color: #666666; text-size: 14; }" + 
+            "edge { size: 2px; fill-color: #333333; }");
     }
 
     //normal calculation methods
 
     public boolean calculateShortestRoute() {
+        return executeTimedCalculation("Dijkstra", this::performDijkstraCalculation);
+    }
+
+    public boolean calculateLeastStationStops() {
+        return executeTimedCalculation("BFS", this::performBFSCalculation);
+    }
+
+    private boolean performDijkstraCalculation() {
         Dijkstra dijkstra = new Dijkstra(Dijkstra.Element.EDGE, null, "length");
         Timestamp start = new Timestamp(System.currentTimeMillis());
         String startNodeName = startStation.getRailStation().getName();
