@@ -161,41 +161,58 @@ public class GraphGenerator {
 
 
     public boolean planRoute(String start, String end, boolean shortestRoute, boolean aStar) {
+        //validate input
+        if (start == null || end == null) {
+            throw new IllegalArgumentException("Start and end station names cannot be null");
+        }
+
         Station startStation = null;
         Station endStation = null;
-        List<Station> stations = getGraphObjectGenerator().getStations();
-        boolean success = false;
 
-        //check that the start and end stations are valid
-        for(Station station : stations) {
-            String name = station.getRailStation().getName();
-            if(name.equals(start)) {
-                startStation = station;
-            } else if(name.equals(end)) {
-                endStation = station;
+        //find the start and end stations in the graph
+        for (Station station : getGraphObjectGenerator().getStations()) {
+            if (station.getRailStation() != null) {
+                String stationName = station.getRailStation().getName();
+                if (stationName != null) {
+                    if (stationName.equalsIgnoreCase(start)) {
+                        startStation = station;
+                    }
+                    if (stationName.equalsIgnoreCase(end)) {
+                        endStation = station;
+                    }
+                }
             }
         }
 
-        if(startStation == null || endStation == null) {
-            System.out.println("Invalid start or end station");
+        //check if start and end stations were found
+        if (startStation == null) {
+            System.err.println("Start station '" + start + "' not found in the system");
+            return false;
+        }
 
-        } else {
+        if (endStation == null) {
+            System.err.println("End station '" + end + "' not found in the system");
+            return false;
+        }
+
+        if (startStation.equals(endStation)) {
+            System.err.println("Start and end stations cannot be the same");
+            return false;
+        }
+
+        try {
             routeGenerator = new RouteGenerator(stations, startStation, endStation, graph);
-            if (!aStar) {
-                if (shortestRoute) {
-                    success = routeGenerator.calculateShortestRoute();
-                } else {
-                    success = routeGenerator.calculateLeastStationStops();
-                }
-            } else {
-                if (shortestRoute) {
-                    success = routeGenerator.calculateShortestRouteAStar();
-                } else {
-                    success = routeGenerator.calculateLeastStationStopsAStar();
-                }
+            if (aStar) {
+                return shortestRoute ? routeGenerator.calculateShortestRouteAStar() : routeGenerator.calculateLeastStationStopsAStar();
+            }else{
+                return shortestRoute ? routeGenerator.calculateShortestRoute() : routeGenerator.calculateLeastStationStops();
+
             }
+        } catch (Exception e) {
+            //error handling for route calculation
+            System.err.println("Error calculating route: " + e.getMessage());
+            return false;
         }
-        return success;
     }
 
     public void printRoute(){

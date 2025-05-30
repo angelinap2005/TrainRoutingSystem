@@ -83,6 +83,7 @@ public class RouteGenerator{
         return path != null;
     }
 
+
     public boolean calculateLeastStationStops(){
         Timestamp start = new Timestamp(System.currentTimeMillis());
         String startNodeName = startStation.getRailStation().getName();
@@ -97,13 +98,9 @@ public class RouteGenerator{
             //create path object
             Path path = new Path();
 
-            //intialise path with start node
+            //initialize path with start node
             path.setRoot(shortestPath.get(0));
-
-            //style start and end nodes
-            setNodeStyle(startNode, endNode, path);
-
-            //add each node to the path
+            //add edges to the path
             for (int i = 0; i < shortestPath.size() - 1; i++) {
                 Node current = shortestPath.get(i);
                 Node next = shortestPath.get(i + 1);
@@ -123,16 +120,19 @@ public class RouteGenerator{
                 }
             }
 
+            setNodeStyle(startNode, endNode, path);
+
             Timestamp end = new Timestamp(System.currentTimeMillis());
             System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
             System.out.println("\nRoute with least amount of stops found:");
             System.out.println("Number of stops: " + (shortestPath.size() - 1));
             System.out.println("Route: ");
             shortestPath.forEach(node -> System.out.println("  -> " + node.getId()));
+            return true;
         } else {
             System.out.println("No path found between " + startNodeName + " and " + endNodeName);
+            return false;
         }
-        return shortestPath != null;
     }
 
     private List<Node> explore(Node source, Node destination) {

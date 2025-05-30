@@ -30,38 +30,42 @@ import java.util.ArrayList;
 public class RailSystem {
 
     public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
-        File railLinesPath = null;
-        File railStationsPath = null;
+        try{
+            File railLinesPath = null;
+            File railStationsPath = null;
 
-        //parse arguments
-        for (String arg : args) {
-            if (arg.startsWith("railLines=")) {
-                railLinesPath = new File(arg.substring("railLines=".length()));
-            } else if (arg.startsWith("railStations=")) {
-                railStationsPath = new File(arg.substring("railStations=".length()));
+            //parse arguments
+            for (String arg : args) {
+                if (arg.startsWith("railLines=")) {
+                    railLinesPath = new File(arg.substring("railLines=".length()));
+                } else if (arg.startsWith("railStations=")) {
+                    railStationsPath = new File(arg.substring("railStations=".length()));
+                }
             }
+
+            if (railLinesPath == null || railStationsPath == null) {
+                System.err.println("Files not found");
+                return;
+            }
+
+            FileParser parser = new FileParser();
+            parser.traverse(parseDoc(railLinesPath));
+            parser.traverse(parseDoc(railStationsPath));
+
+            //set rail lines
+            setRailLines(parser.getRailLines(), parser.getRailStations());
+            //generate graph objects
+            GraphObjectGenerator graphObjectGenerator = new GraphObjectGenerator(parser.getRailLines(), parser.getRailStations());
+            graphObjectGenerator.controller();
+            //generate graph
+            GraphGenerator graphGenerator = new GraphGenerator(graphObjectGenerator);
+            graphGenerator.generateGraph(graphObjectGenerator.getStations());
+            //pass to user control
+            UserControl userControl = new UserControl(graphGenerator);
+            userControl.start();
+        }catch (Exception e){
+            System.err.println("An error occurred: " + e.getMessage());
         }
-
-        if (railLinesPath == null || railStationsPath == null) {
-            System.err.println("Files not found");
-            return;
-        }
-
-        FileParser parser = new FileParser();
-        parser.traverse(parseDoc(railLinesPath));
-        parser.traverse(parseDoc(railStationsPath));
-
-        //set rail lines
-        setRailLines(parser.getRailLines(), parser.getRailStations());
-        //generate graph objects
-        GraphObjectGenerator graphObjectGenerator = new GraphObjectGenerator(parser.getRailLines(), parser.getRailStations());
-        graphObjectGenerator.controller();
-        //generate graph
-        GraphGenerator graphGenerator = new GraphGenerator(graphObjectGenerator);
-        graphGenerator.generateGraph(graphObjectGenerator.getStations());
-        //pass to user control
-        UserControl userControl = new UserControl(graphGenerator);
-        userControl.start();
     }
 
     private static Document parseDoc(File fileKML) throws ParserConfigurationException, IOException, SAXException {
