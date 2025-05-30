@@ -22,6 +22,10 @@ public class FileParser {
     }
 
     public void traverse(Document doc) {
+        if(doc == null || doc.getDocumentElement() == null || doc.getElementsByTagName("kml").getLength() == 0 || doc.getElementsByTagName("Document").getLength() == 0 || doc.getElementsByTagName("name").getLength() == 0) {
+            System.out.println("Document is invalid or does not contain expected elements.");
+            return;
+        }
         Element kmlElement = (Element) doc.getElementsByTagName("kml").item(0);
         Element documentElement = (Element) kmlElement.getElementsByTagName("Document").item(0);
         String docName = documentElement.getElementsByTagName("name").item(0).getTextContent();

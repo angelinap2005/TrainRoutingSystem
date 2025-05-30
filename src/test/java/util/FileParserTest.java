@@ -37,6 +37,14 @@ public class FileParserTest {
         assertEquals(654, fileParserMock.getRailStations().size());
     }
 
+    @Test
+    public void testParseInvalidFile() throws IOException, ParserConfigurationException, SAXException {
+        Document doc = parseDoc(new File("src/test/resources/invalidFile.kml"));
+        fileParserMock.traverse(doc);
+        assertEquals(0, fileParserMock.getRailLines().size());
+        assertEquals(0, fileParserMock.getRailStations().size());
+    }
+
     private Document parseDoc(File fileKML) throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
