@@ -128,10 +128,10 @@ public class RouteGenerator{
             System.out.println("Number of stops: " + (shortestPath.size() - 1));
             System.out.println("Route: ");
             shortestPath.forEach(node -> System.out.println("  -> " + node.getId()));
-            return true;
+            return shortestPath != null;
         } else {
             System.out.println("No path found between " + startNodeName + " and " + endNodeName);
-            return false;
+            return shortestPath == null;
         }
     }
 
@@ -232,7 +232,7 @@ public class RouteGenerator{
                 System.out.printf("Total distance: %.2f km%n", gScore.get(endNode));
                 System.out.println("Route: ");
                 path.nodes().forEach(node -> System.out.println("  -> " + node.getId()));
-                return true;
+                return path != null;
             }
 
             closedSet.add(current);
@@ -399,7 +399,7 @@ public class RouteGenerator{
                 System.out.println("Number of stops: " + (pathNodes.size() - 1));
                 System.out.println("Route: ");
                 pathNodes.forEach(n -> System.out.println("  -> " + n.getId()));
-                return true;
+                return path != null;
             }
 
             closedSet.add(current);
