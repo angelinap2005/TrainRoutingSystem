@@ -31,17 +31,9 @@ public class RailSystem {
 
     public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
         try{
-            File railLinesPath = null;
-            File railStationsPath = null;
 
-            //parse arguments
-            for (String arg : args) {
-                if (arg.startsWith("railLines=")) {
-                    railLinesPath = new File(arg.substring("railLines=".length()));
-                } else if (arg.startsWith("railStations=")) {
-                    railStationsPath = new File(arg.substring("railStations=".length()));
-                }
-            }
+            File railLinesPath = new File(args[0]);
+            File railStationsPath = new File(args[1]);
 
             if (railLinesPath == null || railStationsPath == null) {
                 System.err.println("Files not found");
