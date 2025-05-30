@@ -20,6 +20,7 @@ public class FileParser {
         this.railLines = new ArrayList<>();
         this.railStations = new ArrayList<>();
     }
+
     public void traverse(Document doc) {
         Element kmlElement = (Element) doc.getElementsByTagName("kml").item(0);
         Element documentElement = (Element) kmlElement.getElementsByTagName("Document").item(0);
