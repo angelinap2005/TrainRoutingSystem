@@ -11,19 +11,19 @@ import org.graphstream.graph.*;
 import org.graphstream.algorithm.Dijkstra;
 
 /*For shortest path calculations, code taken from:
-* https://graphstream-project.org/doc/Algorithms/Shortest-path/Dijkstra/
-*
-* For BFS algorithm, code taken from:
-* https://graphstream-project.org/doc/Tutorials/Storing-retrieving-and-displaying-data-in-graphs/#an-example-using-attributes-and-the-viewer
-* https://favtutor.com/blogs/breadth-first-search-java
-* https://www.geeksforgeeks.org/breadth-first-search-or-bfs-for-a-graph/
-*
-* For A* algorithm, code taken from:
-* https://www.geeksforgeeks.org/a-search-algorithm/
-* https://www.baeldung.com/java-a-star-pathfinding
-* https://codegym.cc/groups/posts/a-search-algorithm-in-java
-* https://www.geeksforgeeks.org/euclidean-distance
-*/
+ * https://graphstream-project.org/doc/Algorithms/Shortest-path/Dijkstra/
+ *
+ * For BFS algorithm, code taken from:
+ * https://graphstream-project.org/doc/Tutorials/Storing-retrieving-and-displaying-data-in-graphs/#an-example-using-attributes-and-the-viewer
+ * https://favtutor.com/blogs/breadth-first-search-java
+ * https://www.geeksforgeeks.org/breadth-first-search-or-bfs-for-a-graph/
+ *
+ * For A* algorithm, code taken from:
+ * https://www.geeksforgeeks.org/a-search-algorithm/
+ * https://www.baeldung.com/java-a-star-pathfinding
+ * https://codegym.cc/groups/posts/a-search-algorithm-in-java
+ * https://www.geeksforgeeks.org/euclidean-distance
+ */
 
 @Setter
 @Getter
@@ -38,30 +38,16 @@ public class RouteGenerator{
         this.startStation = startStation;
         this.endStation = endStation;
         this.graph = graph;
-        initializeGraphProperties();
-    }
-
-    private void initializeGraphProperties() {
         System.setProperty("org.graphstream.ui", "swing");
         System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
         graph.setAttribute("ui.quality");
         graph.setAttribute("ui.antialias");
-        graph.setAttribute("ui.stylesheet", 
-            "node { size: 10px; fill-color: #666666; text-size: 14; }" + 
-            "edge { size: 2px; fill-color: #333333; }");
+        graph.setAttribute("ui.stylesheet", "node { size: 10px; fill-color: #666666; text-size: 14; }" + "edge { size: 2px; fill-color: #333333; }");
     }
 
     //normal calculation methods
 
     public boolean calculateShortestRoute() {
-        return executeTimedCalculation("Dijkstra", this::performDijkstraCalculation);
-    }
-
-    public boolean calculateLeastStationStops() {
-        return executeTimedCalculation("BFS", this::performBFSCalculation);
-    }
-
-    private boolean performDijkstraCalculation() {
         Dijkstra dijkstra = new Dijkstra(Dijkstra.Element.EDGE, null, "length");
         Timestamp start = new Timestamp(System.currentTimeMillis());
         String startNodeName = startStation.getRailStation().getName();
@@ -350,9 +336,6 @@ public class RouteGenerator{
     }
 
     public boolean calculateLeastStationStopsAStar() {
-        if (startStation == null || endStation == null) {
-            return false;
-        }
         Timestamp start = new Timestamp(System.currentTimeMillis());
         String startNodeName = startStation.getRailStation().getName();
         Node startNode = graph.getNode(startNodeName);
@@ -365,20 +348,96 @@ public class RouteGenerator{
             System.err.println("No nodes found");
             return false;
         }
+        //A* starting setup for fewest stops
+        Map<Node, Integer> gScore = new HashMap<>();
+        Map<Node, Node> cameFrom = new HashMap<>();
+        Set<Node> closedSet = new HashSet<>();
 
-        // Setup data structures
-        PriorityQueue<Station> queue = new PriorityQueue<>(Comparator.comparingDouble(station ->
-                Arrays.stream(getStations().get(0).getRailStation().getCoordinates()).count() + heuristicCost(startNode, endNode)));
+        //priority queue for an open set (nodes to be evaluated)
+        PriorityQueue<Node> openSet = new PriorityQueue<>((a, b) -> {
+            int fScoreA = gScore.getOrDefault(a, Integer.MAX_VALUE) + estimateStopsToGoal(a, endNode);
+            int fScoreB = gScore.getOrDefault(b, Integer.MAX_VALUE) + estimateStopsToGoal(b, endNode);
+            return Integer.compare(fScoreA, fScoreB);
+        });
 
-        Set<Station> visited = new HashSet<>();
-        Map<Station, Station> parentMap = new HashMap<>();
-        Map<Station, Double> costSoFar = new HashMap<>();
+        gScore.put(startNode, 0);
+        openSet.add(startNode);
 
-        // Initialize with start station
-        queue.add(startStation);
-        costSoFar.put(startStation, 0.0);
+        //initialise gScore for all nodes
+        while (!openSet.isEmpty()) {
+            Node current = openSet.poll();
 
+            if (current.equals(endNode)) {
+                List<Node> pathNodes = new ArrayList<>();
+                Node node = current;
+
+                while (node != null) {
+                    pathNodes.add(0, node);
+                    node = cameFrom.get(node);
+                }
+
+                Path path = new Path();
+                path.setRoot(pathNodes.get(0));
+
+                for (int i = 0; i < pathNodes.size() - 1; i++) {
+                    Node currentNode = pathNodes.get(i);
+                    Node nextNode = pathNodes.get(i + 1);
+
+                    for (Edge edge : currentNode.edges().toList()) {
+                        if (edge.getOpposite(currentNode).equals(nextNode)) {
+                            path.add(edge);
+                            break;
+                        }
+                    }
+                }
+
+                //style start and end nodes
+                setNodeStyle(startNode, endNode, path);
+                Timestamp end = new Timestamp(System.currentTimeMillis());
+                System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
+                System.out.println("\nRoute with least amount of stops found:");
+                System.out.println("Number of stops: " + (pathNodes.size() - 1));
+                System.out.println("Route: ");
+                pathNodes.forEach(n -> System.out.println("  -> " + n.getId()));
+                return true;
+            }
+
+            closedSet.add(current);
+
+            //explore neighbors
+            for (Edge edge : current.edges().toList()) {
+                Node neighbor = edge.getOpposite(current);
+
+                if (closedSet.contains(neighbor)) {
+                    continue;
+                }
+
+                //calculate tentative gScore
+                int tentativeGScore = gScore.get(current) + 1;
+
+                if (!gScore.containsKey(neighbor) || tentativeGScore < gScore.get(neighbor)) {
+                    cameFrom.put(neighbor, current);
+                    gScore.put(neighbor, tentativeGScore);
+
+                    if (!openSet.contains(neighbor)) {
+                        openSet.add(neighbor);
+                    } else {
+                        openSet.remove(neighbor);
+                        openSet.add(neighbor);
+                    }
+                }
+            }
+        }
+
+        //if no path found
+        System.out.println("No path found between " + startNodeName + " and " + endNodeName);
         return false;
+    }
+
+    private int estimateStopsToGoal(Node current, Node goal) {
+        //use heuristic cost to estimate the number of stops to the goal
+        double distance = heuristicCost(current, goal);
+        return (int)(distance * 100);
     }
 
     //general methods
