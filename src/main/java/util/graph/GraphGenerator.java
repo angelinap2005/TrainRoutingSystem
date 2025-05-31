@@ -1,19 +1,28 @@
 package util.graph;
 
+import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
 import org.graphstream.graph.*;
 import org.graphstream.graph.implementations.SingleGraph;
+import org.graphstream.ui.view.View;
 import org.graphstream.ui.view.Viewer;
 import dto.Route;
 import dto.Station;
+import org.graphstream.ui.view.camera.Camera;
 
 /*For graph generation, code was taken from
 * https://graphstream-project.org/doc/Tutorials/Getting-Started/
 * https://graphstream-project.org/doc/Tutorials/Graph-Visualisation/
 * https://stackoverflow.com/questions/67331322/show-the-names-of-nodes-and-edges-using-graphstream-in-scala
+*
+* Displaying the graph and user controls code taken from:
+* https://stackoverflow.com/questions/44675827/how-to-zoom-into-a-graphstream-view
 */
 @Getter
 @Setter
@@ -31,14 +40,11 @@ public class GraphGenerator {
 
     private void setSystemProperties() {
         //set graph attributes
-        System.setProperty("org.graphstream.ui", "swing");
-        System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
         this.graph = new SingleGraph("Train Graph");
         this.processedEdges = new HashSet<>();
 
-        graph.setAttribute("ui.quality");
-        graph.setAttribute("ui.antialias");
-        graph.setAttribute("ui.stylesheet", "node { size: 10px; fill-color: #666666; text-size: 14; }" + "edge { size: 2px; fill-color: #333333; }");
+        System.setProperty("org.graphstream.ui", "swing");
+        System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
     }
 
 
@@ -132,30 +138,80 @@ public class GraphGenerator {
     }
 
 
+
     public void printEntireMap() {
         try {
             setGraphStyles();
+            //display the graph
             Viewer viewer = graph.display();
             viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
+            viewer.enableAutoLayout();
+
+            //user controls
+            System.out.println("\nGraph Controls:");
+            System.out.println("- Use mouse wheel to zoom in/out");
+            System.out.println("- Use arrow keys to pan the view");
+            System.out.println("- Press 'r' to reset view");
+            //create a thread to handle user input for zooming and panning
+            new Thread(() -> {
+                try {
+                    Thread.sleep(1000);
+                    View view = viewer.getDefaultView();
+                    if (view != null && view instanceof Component) {
+                        Component component = (Component) view;
+
+                        //when the component is focused, set up mouse wheel and key listeners
+                        component.addMouseWheelListener(e -> {
+                            Camera camera = view.getCamera();
+                            double currentZoom = camera.getViewPercent();
+                            double zoomFactor = 0.05;
+
+                            //zoom in or out based on mouse wheel rotation
+                            if (e.getWheelRotation() < 0) {
+                                double newZoom = currentZoom * (1.0 - zoomFactor);
+                                camera.setViewPercent(Math.max(newZoom, 0.05));
+                            } else {
+                                double newZoom = currentZoom * (1.0 + zoomFactor);
+                                camera.setViewPercent(Math.min(newZoom, 3.0));
+                            }
+                        });
+
+                        component.addKeyListener(new KeyAdapter() {
+                            @Override
+                            //when r is pressed, reset the camera view
+                            public void keyPressed(KeyEvent e) {
+                                Camera camera = view.getCamera();
+
+                                switch (e.getKeyCode()) {
+                                    case KeyEvent.VK_R:
+                                        camera.resetView();
+                                        camera.setViewPercent(1.0);
+                                        break;
+                                }
+                            }
+                        });
+
+                        component.setFocusable(true);
+                        component.requestFocus();
+                    }
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
+
         } catch (Exception e) {
             System.err.println("Error displaying graph: " + e.getMessage());
         }
     }
 
+
     private void setGraphStyles(){
         //set default node and edge styles
         graph.edges().forEach(edge -> {
-            edge.setAttribute("ui.style", "fill-color: #333333;");
+            edge.setAttribute("ui.style", "fill-color: blue;");
         });
         graph.nodes().forEach(node -> {
-            node.setAttribute("ui.style", "fill-color: #666666;");
-        });
-
-        graph.edges().forEach(edge -> {
-            edge.setAttribute("ui.style", "fill-color: #333333;");
-        });
-        graph.nodes().forEach(node -> {
-            node.setAttribute("ui.style", "fill-color: #666666;");
+            node.setAttribute("ui.style", "fill-color: #888888; " + "text-style: bold; " + "text-color: black;" + "text-size: 15px;");
         });
     }
 

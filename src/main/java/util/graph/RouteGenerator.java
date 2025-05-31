@@ -2,13 +2,20 @@ package util.graph;
 
 import dto.Station;
 
+import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
 import org.graphstream.graph.*;
 import org.graphstream.algorithm.Dijkstra;
+import org.graphstream.ui.view.View;
+import org.graphstream.ui.view.Viewer;
+import org.graphstream.ui.view.camera.Camera;
 
 /*For shortest path calculations, code taken from:
  * https://graphstream-project.org/doc/Algorithms/Shortest-path/Dijkstra/
@@ -23,6 +30,9 @@ import org.graphstream.algorithm.Dijkstra;
  * https://www.baeldung.com/java-a-star-pathfinding
  * https://codegym.cc/groups/posts/a-search-algorithm-in-java
  * https://www.geeksforgeeks.org/euclidean-distance
+ *
+ * Displaying the graph and user controls code taken from:
+ * https://stackoverflow.com/questions/44675827/how-to-zoom-into-a-graphstream-view
  */
 
 @Setter
@@ -40,9 +50,6 @@ public class RouteGenerator{
         this.graph = graph;
         System.setProperty("org.graphstream.ui", "swing");
         System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
-        graph.setAttribute("ui.quality");
-        graph.setAttribute("ui.antialias");
-        graph.setAttribute("ui.stylesheet", "node { size: 10px; fill-color: #666666; text-size: 14; }" + "edge { size: 2px; fill-color: #333333; }");
     }
 
     //normal calculation methods
@@ -442,11 +449,73 @@ public class RouteGenerator{
 
     //general methods
 
-    public void displayRoute(){
-        graph.display();
+    public void displayRoute() {
+        try {
+            Viewer viewer = graph.display();
+            viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
+            viewer.enableAutoLayout();
+
+            //user controls for the graph
+            System.out.println("\nGraph Controls:");
+            System.out.println("- Use mouse wheel to zoom in/out");
+            System.out.println("- Use arrow keys to pan the view");
+            System.out.println("- Press 'r' to reset view");
+
+            //create a new thread to handle user input for zooming and panning
+            new Thread(() -> {
+                try {
+                    Thread.sleep(1000);
+                    View view = viewer.getDefaultView();
+                    if (view != null && view instanceof Component) {
+                        Component component = (Component) view;
+
+                        component.addMouseWheelListener(e -> {
+                            Camera camera = view.getCamera();
+                            double currentZoom = camera.getViewPercent();
+
+                            double zoomFactor = 0.05;
+
+                            //zoom in or out based on mouse wheel rotation
+                            if (e.getWheelRotation() < 0) {
+                                double newZoom = currentZoom * (1.0 - zoomFactor);
+                                camera.setViewPercent(Math.max(newZoom, 0.05));
+                            } else {
+                                double newZoom = currentZoom * (1.0 + zoomFactor);
+                                camera.setViewPercent(Math.min(newZoom, 3.0));
+                            }
+                        });
+
+                        component.addKeyListener(new KeyAdapter() {
+                            @Override
+                            public void keyPressed(KeyEvent e) {
+                                Camera camera = view.getCamera();
+
+                                switch (e.getKeyCode()) {
+                                    case KeyEvent.VK_R:
+                                        camera.resetView();
+                                        camera.setViewPercent(1.0);
+                                        break;
+                                }
+                            }
+                        });
+
+                        //request focus for the component to capture key events
+                        component.setFocusable(true);
+                        component.requestFocus();
+                    }
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
+
+        } catch (Exception e) {
+            System.err.println("Error displaying graph: " + e.getMessage());
+        }
+
     }
 
     private void resetGraphEdges(){
+        //reset all edges and nodes to default style
         graph.edges().forEach(edge -> {
             edge.setAttribute("ui.style", "fill-color: #333333;");
         });
@@ -456,13 +525,19 @@ public class RouteGenerator{
     }
 
     private void setNodeStyle(Node startNode, Node endNode, Path path) {
-        startNode.setAttribute("ui.style", "fill-color: green;");
-        endNode.setAttribute("ui.style", "fill-color: red;");
+        //start and end nodes styling
+        startNode.setAttribute("ui.style", "fill-color: green; " + "text-style: bold; " + "text-color: blue; " + "text-size: 15px;");
 
-        path.edges().forEach(edge -> {edge.setAttribute("ui.style", "fill-color: #FF0000; size: 3px;");});
+        endNode.setAttribute("ui.style", "fill-color: red; " + "text-style: bold; " + "text-color: blue; " + "text-size: 15px;");
+
+        path.edges().forEach(edge -> {
+            edge.setAttribute("ui.style", "fill-color: #FF0000; size: 3px;");
+        });
+
+        //style nodes in the path
         path.nodes().forEach(node -> {
             if (node != startNode && node != endNode) {
-                node.setAttribute("ui.style", "fill-color: #FFA500;");
+                node.setAttribute("ui.style", "fill-color: #FFA500; " + "text-style: bold; " + "text-color: black; " + "text-size: 15px;");
             }
         });
     }
