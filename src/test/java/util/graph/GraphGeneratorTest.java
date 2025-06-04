@@ -19,9 +19,6 @@ public class GraphGeneratorTest {
     @Mock
     private GraphObjectGenerator graphObjectGenerator;
 
-    @Mock
-    private RouteGenerator routeGenerator;
-
     private GraphGenerator graphGenerator;
     private List<Station> stations;
 
@@ -29,7 +26,6 @@ public class GraphGeneratorTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
 
-        // Create test stations
         stations = new ArrayList<>();
         Station station1 = mock(Station.class);
         Station station2 = mock(Station.class);

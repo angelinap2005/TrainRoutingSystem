@@ -3,12 +3,11 @@ import dto.RailLine;
 import dto.RailStation;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
+import util.DocumentParser;
 import util.graph.GraphGenerator;
 import util.graph.GraphObjectGenerator;
 import util.FileParser;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
@@ -61,15 +60,10 @@ public class RailSystem {
     }
 
     private static Document parseDoc(File fileKML) throws ParserConfigurationException, IOException, SAXException {
-        //parse kml
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        Document doc = db.parse(fileKML);
-        doc.getDocumentElement().normalize();
-        return doc;
+        return DocumentParser.parseDocument(fileKML);
     }
 
-    private static void setRailLines(ArrayList<RailLine> railLines, ArrayList<RailStation> railStations) {
+    public static void setRailLines(ArrayList<RailLine> railLines, ArrayList<RailStation> railStations) {
         for (RailStation station : railStations) {
             ArrayList<RailLine> lines = new ArrayList<>();
             String stationName = station.getName();
