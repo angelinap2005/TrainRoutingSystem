@@ -6,6 +6,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
+import dto.RailStation;
 import lombok.Getter;
 import lombok.Setter;
 import org.graphstream.graph.*;
@@ -15,6 +16,8 @@ import org.graphstream.ui.view.Viewer;
 import dto.Route;
 import dto.Station;
 import org.graphstream.ui.view.camera.Camera;
+
+import javax.swing.*;
 
 /*For graph generation, code was taken from
 * https://graphstream-project.org/doc/Tutorials/Getting-Started/
@@ -53,7 +56,26 @@ public class GraphGenerator {
         if (stations == null) {
             throw new IllegalArgumentException("Stations list cannot be null");
         }
+        Graph graph = new SingleGraph("RailNetwork");
 
+        graph.setAttribute("ui.quality");
+        graph.setAttribute("ui.antialias");
+
+        for (Station station : stations) {
+            if (isValidStation(station)) {
+                RailStation railStation = station.getRailStation();
+                Node node = graph.addNode(railStation.getName());
+
+                Double[] coords = railStation.getCoordinates();
+                if (coords != null && coords.length >= 2) {
+                    node.setAttribute("x", coords[0]);
+                    node.setAttribute("y", -coords[1]);
+                    node.setAttribute("layout.frozen");
+                }
+
+                node.setAttribute("ui.label", railStation.getName());
+            }
+        }
         try {
             //clear the graph
             graph.clear();
