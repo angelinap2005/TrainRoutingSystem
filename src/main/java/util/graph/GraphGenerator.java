@@ -1,12 +1,14 @@
 package util.graph;
 
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.Timer;
 
+import dto.RailLine;
 import dto.RailStation;
+import org.graphstream.ui.geom.Point3;
+import org.graphstream.ui.layout.springbox.implementations.SpringBox;
 import lombok.Getter;
 import lombok.Setter;
 import org.graphstream.graph.*;
@@ -17,16 +19,6 @@ import dto.Route;
 import dto.Station;
 import org.graphstream.ui.view.camera.Camera;
 
-import javax.swing.*;
-
-/*For graph generation, code was taken from
-* https://graphstream-project.org/doc/Tutorials/Getting-Started/
-* https://graphstream-project.org/doc/Tutorials/Graph-Visualisation/
-* https://stackoverflow.com/questions/67331322/show-the-names-of-nodes-and-edges-using-graphstream-in-scala
-*
-* Displaying the graph and user controls code taken from:
-* https://stackoverflow.com/questions/44675827/how-to-zoom-into-a-graphstream-view
-*/
 @Getter
 @Setter
 public class GraphGenerator {
@@ -42,7 +34,6 @@ public class GraphGenerator {
     }
 
     private void setSystemProperties() {
-        //set graph attributes
         this.graph = new SingleGraph("Train Graph");
         this.processedEdges = new HashSet<>();
 
@@ -50,20 +41,19 @@ public class GraphGenerator {
         System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
     }
 
-
     public Graph generateGraph(List<Station> stations) {
         this.stations = stations;
+        //check if stations list is null
         if (stations == null) {
             throw new IllegalArgumentException("Stations list cannot be null");
         }
         Graph graph = new SingleGraph("RailNetwork");
 
-        //set graph attributes
         graph.setAttribute("ui.quality");
         graph.setAttribute("ui.antialias");
 
         for (Station station : stations) {
-            //check if station is valid before adding
+            //check if station is null
             if (isValidStation(station)) {
                 RailStation railStation = station.getRailStation();
                 Node node = graph.addNode(railStation.getName());
@@ -71,9 +61,9 @@ public class GraphGenerator {
                 //set node attributes
                 Double[] coords = railStation.getCoordinates();
                 if (coords != null && coords.length >= 2) {
-                    //set node position based on coordinates
-                    node.setAttribute("x", coords[0]);
-                    node.setAttribute("y", -coords[1]);
+                    double scalingFactor = 1.5;
+                    node.setAttribute("x", coords[0] * scalingFactor);
+                    node.setAttribute("y", -coords[1] * scalingFactor);
                     node.setAttribute("layout.frozen");
                 }
 
@@ -81,14 +71,11 @@ public class GraphGenerator {
             }
         }
         try {
-            //clear the graph
+            //add edges between stations
             graph.clear();
             processedEdges.clear();
-            //add graph nodes
             addNodes(stations);
-            //add graph edges
             addEdges(stations);
-
         } catch (Exception e) {
             System.err.println("Error generating graph: " + e.getMessage());
         }
@@ -98,14 +85,14 @@ public class GraphGenerator {
 
     private void addNodes(List<Station> stations) {
         for (Station station : stations) {
+            //check if station is null
             if (isValidStation(station)) {
                 String nodeName = station.getRailStation().getName();
                 try {
+                    //check if node already exists
                     Node node = graph.addNode(nodeName);
-                    //set the node label to station name
                     node.setAttribute("ui.label", nodeName);
                 } catch (IdAlreadyInUseException e) {
-                    //if node already exists, ignore
                     System.err.println("Node " + nodeName + " already exists");
                 }
             }
@@ -114,13 +101,17 @@ public class GraphGenerator {
 
     private void addEdges(List<Station> stations) {
         for (Station station : stations) {
+            //check if station is null
             if (!isValidStation(station)) continue;
 
             String sourceStation = station.getRailStation().getName();
 
+            // check if source station is null
             for (Route route : station.getRoutes()) {
                 try {
+                    //check if route is valid
                     if (isValidRoute(route)) {
+                        //check if destination station is null
                         String destStation = route.getDestination().getName();
                         addEdgeSafely(sourceStation, destStation);
                     }
@@ -132,30 +123,37 @@ public class GraphGenerator {
     }
 
     private boolean isValidStation(Station station) {
+        //check if station is null and has valid attributes
         return station != null && station.getRailStation() != null && station.getRailStation().getName() != null && station.getRoutes() != null;
     }
 
     private boolean isValidRoute(Route route) {
+        //check if route is null and has valid attributes
         return route != null && route.getRailLine() != null && route.getRailLine().getName() != null && route.getDestination() != null && route.getDestination().getName() != null;
     }
+
 
     private void addEdgeSafely(String sourceStation, String destStation) {
         String edgeId = sourceStation + "--" + destStation;
         String reverseEdgeId = destStation + "--" + sourceStation;
 
         if (processedEdges.contains(edgeId) || processedEdges.contains(reverseEdgeId)) {
-            //if edge already exists, ignore
             return;
         }
 
         try {
             Edge edge = graph.addEdge(edgeId, sourceStation, destStation, false);
             if (edge != null) {
-                //get weight from distance map
                 Double weight = graphObjectGenerator.getStationDistances().getOrDefault(sourceStation, new HashMap<>()).getOrDefault(destStation, 1.0);
-
-                //set length as weight attribute
                 edge.setAttribute("length", weight);
+
+                String lineColor = getEdgeColor(sourceStation, destStation);
+                if (lineColor != null) {
+                    edge.setAttribute("ui.style", "fill-color: " + lineColor + ";");
+                    // Store the original color as an attribute for later restoration
+                    edge.setAttribute("original.color", lineColor);
+                }
+
                 processedEdges.add(edgeId);
             }
         } catch (Exception e) {
@@ -163,58 +161,118 @@ public class GraphGenerator {
         }
     }
 
+    public void resetEdgeColors() {
+        graph.edges().forEach(edge -> {
+            String originalColor = edge.getAttribute("original.color").toString();
+            if (originalColor != null) {
+                edge.setAttribute("ui.style", "fill-color: " + originalColor + ";");
+            }
+        });
+    }
 
+    public void highlightRouteEdges(List<String> routeStations) {
+        // First reset all edges to original colors
+        resetEdgeColors();
+
+        // Then highlight the route edges
+        for (int i = 0; i < routeStations.size() - 1; i++) {
+            String station1 = routeStations.get(i);
+            String station2 = routeStations.get(i + 1);
+
+            // Try both edge ID formats since edges are undirected
+            Edge edge = graph.getEdge(station1 + "--" + station2);
+            if (edge == null) {
+                edge = graph.getEdge(station2 + "--" + station1);
+            }
+
+            if (edge != null) {
+                edge.setAttribute("ui.style", "fill-color: #FF4500; size: 3px;"); // Bright orange with thicker line
+            }
+        }
+    }
+
+    private String getEdgeColor(String sourceStation, String destStation) {
+        for (Station station : stations) {
+            if (station.getRailStation().getName().equals(sourceStation)) {
+                for (Route route : station.getRoutes()) {
+                    if (route.getDestination().getName().equals(destStation)) {
+                        RailLine railLine = route.getRailLine();
+                        if (railLine != null && railLine.getColor() != null) {
+                            return railLine.getColor();
+                        }
+                    }
+                }
+            }
+        }
+        return "#0000FF";
+    }
 
     public void printEntireMap() {
         try {
-            setGraphStyles();
-            //display the graph
+            configureGraphStyles();
             Viewer viewer = graph.display();
             viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
-            viewer.enableAutoLayout();
 
-            //user controls
+            SpringBox layout = new SpringBox(false);
+            layout.setForce(0.7);
+            layout.setQuality(1);
+            layout.setStabilizationLimit(0.9);
+            viewer.enableAutoLayout(layout);
+
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    viewer.disableAutoLayout();
+                }
+            }, 3000);
+
             System.out.println("\nGraph Controls:");
             System.out.println("- Use mouse wheel to zoom in/out");
             System.out.println("- Use arrow keys to pan the view");
-            System.out.println("- Press 'r' to reset view");
-            //create a thread to handle user input for zooming and panning
+            System.out.println("- Press shift 'r' to reset view");
+
             new Thread(() -> {
                 try {
                     Thread.sleep(1000);
                     View view = viewer.getDefaultView();
+
                     if (view != null && view instanceof Component) {
                         Component component = (Component) view;
 
-                        //when the component is focused, set up mouse wheel and key listeners
                         component.addMouseWheelListener(e -> {
                             Camera camera = view.getCamera();
                             double currentZoom = camera.getViewPercent();
                             double zoomFactor = 0.05;
+                            Point3 center = camera.getViewCenter();
 
-                            //zoom in or out based on mouse wheel rotation
                             if (e.getWheelRotation() < 0) {
                                 double newZoom = currentZoom * (1.0 - zoomFactor);
-                                camera.setViewPercent(Math.max(newZoom, 0.05));
+                                newZoom = Math.max(newZoom, 0.05);
+
+                                camera.setAutoFitView(false);
+                                camera.setViewPercent(newZoom);
+
+                                double viewportSize = Math.max(20, 10/newZoom);
+                                camera.setGraphViewport(-viewportSize, -viewportSize, viewportSize, viewportSize);
+
+                                double finalNewZoom = newZoom;
+                                graph.nodes().forEach(node -> {
+                                    double scale = Math.min(1.5, 1.0/ finalNewZoom * 0.3);
+                                    node.setAttribute("ui.size", 10 * scale);
+                                    node.setAttribute("ui.style", "text-size: 12px; z-index: 1000;");
+                                });
                             } else {
                                 double newZoom = currentZoom * (1.0 + zoomFactor);
-                                camera.setViewPercent(Math.min(newZoom, 3.0));
-                            }
-                        });
+                                newZoom = Math.min(newZoom, 3.0);
+                                camera.setViewPercent(newZoom);
 
-                        component.addKeyListener(new KeyAdapter() {
-                            @Override
-                            //when r is pressed, reset the camera view
-                            public void keyPressed(KeyEvent e) {
-                                Camera camera = view.getCamera();
-
-                                switch (e.getKeyCode()) {
-                                    case KeyEvent.VK_R:
-                                        camera.resetView();
-                                        camera.setViewPercent(1.0);
-                                        break;
-                                }
+                                graph.nodes().forEach(node -> {
+                                    node.setAttribute("ui.size", 10);
+                                    node.setAttribute("ui.style", "text-size: 12px; z-index: 100;");
+                                });
                             }
+
+                            camera.setViewCenter(center.x, center.y, 0);
                         });
 
                         component.setFocusable(true);
@@ -230,28 +288,46 @@ public class GraphGenerator {
         }
     }
 
+    private void configureGraphStyles() {
+        graph.setAttribute("ui.quality");
+        graph.setAttribute("ui.antialias");
 
-    private void setGraphStyles(){
-        //set default node and edge styles
+        String stylesheet =
+                "graph { padding: 50px; } " +
+                        "node { " +
+                        "size: 10px; " +
+                        "fill-color: #888888; " +
+                        "text-style: bold; " +
+                        "text-color: black; " +
+                        "text-size: 15px; " +
+                        "text-offset: 5px, 5px; " +
+                        "text-background-mode: rounded-box; " +
+                        "text-background-color: rgba(240, 240, 240, 200); " +
+                        "text-padding: 3px; " +
+                        "} " +
+                        "edge { " +
+                        "arrow-size: 5px, 4px; " +
+                        "size-mode: dyn-size; " +
+                        "size: 2px; " +
+                        "}";
+
+        graph.setAttribute("ui.stylesheet", stylesheet);
+
         graph.edges().forEach(edge -> {
-            edge.setAttribute("ui.style", "fill-color: blue;");
-        });
-        graph.nodes().forEach(node -> {
-            node.setAttribute("ui.style", "fill-color: #888888; " + "text-style: bold; " + "text-color: black;" + "text-size: 15px;");
+            edge.setAttribute("weight", 2.0);
         });
     }
 
-
-    public boolean planRoute(String start, String end, boolean shortestRoute, boolean aStar) {
-        //validate input
+    public boolean planRoute(String start, String end, boolean shortestRoute, boolean aStar, boolean leastChanges) {
         if (start == null || end == null) {
             throw new IllegalArgumentException("Start and end station names cannot be null");
         }
 
+        resetEdgeColors();
+
         Station startStation = null;
         Station endStation = null;
 
-        //find the start and end stations in the graph
         for (Station station : getGraphObjectGenerator().getStations()) {
             if (station.getRailStation() != null) {
                 String stationName = station.getRailStation().getName();
@@ -266,7 +342,6 @@ public class GraphGenerator {
             }
         }
 
-        //check if start and end stations were found
         if (startStation == null) {
             System.err.println("Start station '" + start + "' not found in the system");
             return false;
@@ -284,21 +359,21 @@ public class GraphGenerator {
 
         try {
             routeGenerator = new RouteGenerator(stations, startStation, endStation, graph);
+            if(leastChanges){
+                return routeGenerator.calculateLeastChanges();
+            }
             if (aStar) {
                 return shortestRoute ? routeGenerator.calculateShortestRouteAStar() : routeGenerator.calculateLeastStationStopsAStar();
             }else{
                 return shortestRoute ? routeGenerator.calculateShortestRoute() : routeGenerator.calculateLeastStationStops();
-
             }
         } catch (Exception e) {
-            //error handling for route calculation
             System.err.println("Error calculating route: " + e.getMessage());
             return false;
         }
     }
 
-    public void printRoute(){
+    public void printRoute() {
         routeGenerator.displayRoute();
     }
-
 }

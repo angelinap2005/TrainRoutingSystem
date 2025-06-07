@@ -23,7 +23,8 @@ public class UserControl {
         System.out.println("1. View map of stations");
         System.out.println("2. Plan a route");
         System.out.println("3. Plan a route with the A* algorithm");
-        System.out.println("4. Exit");
+        System.out.println("4. Plan a route with the least amount of line changes");
+        System.out.println("5. Exit");
 
         String input = scanner.nextLine();
 
@@ -45,6 +46,9 @@ public class UserControl {
                     planRoute(true);
                     break;
                 case "4":
+                    planRouteWithLeastChanges();
+                case "5":
+                    System.out.println("Thank you for using the London Transport System!");
                     System.exit(0);
                     break;
             }
@@ -89,17 +93,59 @@ public class UserControl {
             }
 
             boolean isShortestRoute = decision.equalsIgnoreCase("shortest");
-            boolean success = graphGenerator.planRoute(start, end, isShortestRoute, aStar);
+            boolean success = graphGenerator.planRoute(start, end, isShortestRoute, aStar, false);
             //if the route planning was successful, ask if the user wants to view the map
             if (success) {
-                System.out.println("Would you like to view the map of the route? (y/n) ");
-                String input = scanner.nextLine();
-                if (input != null && input.equalsIgnoreCase("y")) {
-                    graphGenerator.printRoute();
-                }
+                viewMapOfRoute();
             }
         } catch (Exception e) {
             System.out.println("Error planning route: " + e.getMessage());
+        }
+    }
+
+    private void planRouteWithLeastChanges(){
+        try {
+            //error handling for empty input
+            System.out.println("Please enter the name of the starting station: ");
+            String start = scanner.nextLine();
+            if (start == null || start.trim().isEmpty()) {
+                System.out.println("Starting station cannot be empty.");
+                return;
+            }
+
+            System.out.println("Please enter the name of the destination station: ");
+            String end = scanner.nextLine();
+            if (end == null || end.trim().isEmpty()) {
+                System.out.println("Destination station cannot be empty.");
+                return;
+            }
+
+            //error handling for start and end being the same
+            if (start.equalsIgnoreCase(end)) {
+                System.out.println("Start and destination stations cannot be the same.");
+                return;
+            }
+
+            boolean success = graphGenerator.planRoute(start, end, false, false, true);
+
+            if (success) {
+                viewMapOfRoute();
+            }
+        } catch (Exception e) {
+            System.out.println("Error planning route: " + e.getMessage());
+        }
+    }
+
+    private void viewMapOfRoute(){
+        System.out.println("Would you like to view the map of the route? (y/n) ");
+        String input = scanner.nextLine();
+        if (input != null && input.equalsIgnoreCase("y")) {
+            graphGenerator.printRoute();
+        } else if (input != null && input.equalsIgnoreCase("n")) {
+            System.out.println("Thank you for using the London Transport System!");
+        } else {
+            System.out.println("Invalid input. Please enter 'y' or 'n'.");
+            viewMapOfRoute();
         }
     }
 }

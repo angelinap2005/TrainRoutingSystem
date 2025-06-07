@@ -514,31 +514,260 @@ public class RouteGenerator{
 
     }
 
-    private void resetGraphEdges(){
-        //reset all edges and nodes to default style
+    private void resetGraphEdges() {
         graph.edges().forEach(edge -> {
-            edge.setAttribute("ui.style", "fill-color: #333333;");
-        });
-        graph.nodes().forEach(node -> {
-            node.setAttribute("ui.style", "fill-color: #666666;");
+            String originalColor = edge.getAttribute("original.color").toString();
+            if (originalColor != null) {
+                edge.setAttribute("ui.style", "fill-color: " + originalColor + ";");
+            } else {
+                edge.setAttribute("ui.style", "fill-color: #0000FF;");
+            }
         });
     }
 
+
     private void setNodeStyle(Node startNode, Node endNode, Path path) {
-        //start and end nodes styling
-        startNode.setAttribute("ui.style", "fill-color: green; " + "text-style: bold; " + "text-color: blue; " + "text-size: 15px;");
+        resetGraphEdges();
 
-        endNode.setAttribute("ui.style", "fill-color: red; " + "text-style: bold; " + "text-color: blue; " + "text-size: 15px;");
+        startNode.setAttribute("ui.style",
+                "fill-color: green; size: 15px; " +
+                        "text-style: bold; text-color: black; text-size: 15px; " +
+                        "text-offset: 5px, 5px; text-background-mode: rounded-box; " +
+                        "text-background-color: rgba(240, 240, 240, 200); text-padding: 3px;");
 
-        path.edges().forEach(edge -> {
-            edge.setAttribute("ui.style", "fill-color: #FF0000; size: 3px;");
-        });
+        endNode.setAttribute("ui.style",
+                "fill-color: red; size: 15px; " +
+                        "text-style: bold; text-color: black; text-size: 15px; " +
+                        "text-offset: 5px, 5px; text-background-mode: rounded-box; " +
+                        "text-background-color: rgba(240, 240, 240, 200); text-padding: 3px;");
 
-        //style nodes in the path
-        path.nodes().forEach(node -> {
-            if (node != startNode && node != endNode) {
-                node.setAttribute("ui.style", "fill-color: #FFA500; " + "text-style: bold; " + "text-color: black; " + "text-size: 15px;");
+        List<String> routeStations = new ArrayList<>();
+
+        List<Node> pathNodes = path.getNodePath();
+        for (Node node : pathNodes) {
+            if (!node.equals(startNode) && !node.equals(endNode)) {
+                node.setAttribute("ui.style",
+                        "fill-color: orange; size: 12px; " +
+                                "text-style: bold; text-color: black; text-size: 15px; " +
+                                "text-offset: 5px, 5px; text-background-mode: rounded-box; " +
+                                "text-background-color: rgba(240, 240, 240, 200); text-padding: 3px;");
             }
-        });
+            routeStations.add(node.getId());
+        }
+
+        highlightRouteEdges(routeStations);
+    }
+
+    private void highlightRouteEdges(List<String> routeStations) {
+        for (int i = 0; i < routeStations.size() - 1; i++) {
+            String station1 = routeStations.get(i);
+            String station2 = routeStations.get(i + 1);
+
+            Edge edge = graph.getEdge(station1 + "--" + station2);
+            if (edge == null) {
+                edge = graph.getEdge(station2 + "--" + station1);
+            }
+
+            if (edge != null) {
+                edge.setAttribute("ui.style", "fill-color: #FF4500; size: 3px;"); // Bright orange
+            }
+        }
+    }
+
+    public boolean calculateLeastChanges() {
+        Timestamp start = new Timestamp(System.currentTimeMillis());
+        String startNodeName = startStation.getRailStation().getName();
+        Node startNode = graph.getNode(startNodeName);
+        String endNodeName = endStation.getRailStation().getName();
+        Node endNode = graph.getNode(endNodeName);
+
+        resetGraphEdges();
+
+        if (startNode == null || endNode == null) {
+            System.err.println("No nodes found");
+            return false;
+        }
+
+        List<Node> pathWithLeastChanges = findPathWithLeastLineChanges(startNode, endNode);
+
+        if (pathWithLeastChanges != null && pathWithLeastChanges.size() > 0) {
+            Path path = new Path();
+            path.setRoot(pathWithLeastChanges.get(0));
+
+            for (int i = 0; i < pathWithLeastChanges.size() - 1; i++) {
+                Node current = pathWithLeastChanges.get(i);
+                Node next = pathWithLeastChanges.get(i + 1);
+
+                Edge connectingEdge = null;
+                for (Edge edge : current.edges().toList()) {
+                    if (edge.getOpposite(current).equals(next)) {
+                        connectingEdge = edge;
+                        break;
+                    }
+                }
+
+                if (connectingEdge != null) {
+                    path.add(connectingEdge);
+                }
+            }
+
+            setNodeStyle(startNode, endNode, path);
+
+            int lineChanges = calculateLineChanges(pathWithLeastChanges);
+
+            Timestamp end = new Timestamp(System.currentTimeMillis());
+            System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
+            System.out.println("\nRoute with least line changes found:");
+            System.out.println("Number of line changes: " + lineChanges);
+            System.out.println("Number of stops: " + (pathWithLeastChanges.size() - 1));
+            System.out.println("Route: ");
+            pathWithLeastChanges.forEach(node -> System.out.println("  -> " + node.getId()));
+
+            displayLineChanges(pathWithLeastChanges);
+            return true;
+        } else {
+            System.out.println("No path found between " + startNodeName + " and " + endNodeName);
+            return false;
+        }
+    }
+
+    private List<Node> findPathWithLeastLineChanges(Node start, Node end) {
+        PriorityQueue<PathWithChanges> queue = new PriorityQueue<>(
+                Comparator.comparingInt((PathWithChanges p) -> p.lineChanges)
+                        .thenComparingInt(p -> p.path.size())
+        );
+
+        Set<Node> visited = new HashSet<>();
+
+        PathWithChanges initialPath = new PathWithChanges();
+        initialPath.path.add(start);
+        initialPath.lineChanges = 0;
+        initialPath.currentLines = getLinesForStation(start.getId());
+
+        queue.offer(initialPath);
+
+        while (!queue.isEmpty()) {
+            PathWithChanges current = queue.poll();
+            Node currentNode = current.path.get(current.path.size() - 1);
+
+            if (currentNode.equals(end)) {
+                return current.path;
+            }
+
+            if (visited.contains(currentNode)) {
+                continue;
+            }
+            visited.add(currentNode);
+
+            for (Edge edge : currentNode.edges().toList()) {
+                Node neighbor = edge.getOpposite(currentNode);
+
+                if (!visited.contains(neighbor)) {
+                    PathWithChanges newPath = new PathWithChanges();
+                    newPath.path.addAll(current.path);
+                    newPath.path.add(neighbor);
+
+                    Set<String> neighborLines = getLinesForStation(neighbor.getId());
+                    Set<String> commonLines = new HashSet<>(current.currentLines);
+                    commonLines.retainAll(neighborLines);
+
+                    if (commonLines.isEmpty() && current.path.size() > 1) {
+                        newPath.lineChanges = current.lineChanges + 1;
+                        newPath.currentLines = neighborLines;
+                    } else {
+                        newPath.lineChanges = current.lineChanges;
+                        newPath.currentLines = commonLines.isEmpty() ? neighborLines : commonLines;
+                    }
+
+                    queue.offer(newPath);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private Set<String> getLinesForStation(String stationName) {
+        Set<String> lines = new HashSet<>();
+
+        for (Station station : stations) {
+            if (station.getRailStation().getName().equals(stationName)) {
+                if (station.getRailStation().getRailLines() != null) {
+                    station.getRailStation().getRailLines().forEach(line -> {
+                        if (line.getName() != null) {
+                            String lineName = extractLineName(line.getName());
+                            if (lineName != null) {
+                                lines.add(lineName);
+                            }
+                        }
+                    });
+                }
+                break;
+            }
+        }
+
+        return lines;
+    }
+
+    private String extractLineName(String fullLineName) {
+        if (fullLineName.contains(" - ")) {
+            return fullLineName.split(" - ")[0];
+        }
+        return fullLineName;
+    }
+
+    private int calculateLineChanges(List<Node> path) {
+        if (path.size() <= 2) return 0;
+
+        int changes = 0;
+        Set<String> currentLines = getLinesForStation(path.get(0).getId());
+
+        for (int i = 1; i < path.size(); i++) {
+            Set<String> nextLines = getLinesForStation(path.get(i).getId());
+            Set<String> commonLines = new HashSet<>(currentLines);
+            commonLines.retainAll(nextLines);
+
+            if (commonLines.isEmpty()) {
+                changes++;
+                currentLines = nextLines;
+            } else {
+                currentLines = commonLines;
+            }
+        }
+
+        return changes;
+    }
+
+    private void displayLineChanges(List<Node> path) {
+        if (path.size() <= 1) return;
+
+        System.out.println("\nDetailed route with line information:");
+        Set<String> currentLines = getLinesForStation(path.get(0).getId());
+
+        System.out.println("Start at: " + path.get(0).getId());
+        System.out.println("Available lines: " + currentLines);
+
+        for (int i = 1; i < path.size(); i++) {
+            Set<String> nextLines = getLinesForStation(path.get(i).getId());
+            Set<String> commonLines = new HashSet<>(currentLines);
+            commonLines.retainAll(nextLines);
+
+            if (commonLines.isEmpty() && i > 1) {
+                System.out.println("\n*** LINE CHANGE at " + path.get(i-1).getId() + " ***");
+                System.out.println("From lines: " + currentLines);
+                System.out.println("To lines: " + nextLines);
+                currentLines = nextLines;
+            } else if (!commonLines.isEmpty()) {
+                currentLines = commonLines;
+            }
+
+            System.out.println("-> " + path.get(i).getId() + " (Lines: " + currentLines + ")");
+        }
+    }
+
+    private static class PathWithChanges {
+        List<Node> path = new ArrayList<>();
+        int lineChanges = 0;
+        Set<String> currentLines = new HashSet<>();
     }
 }
