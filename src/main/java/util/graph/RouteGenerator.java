@@ -52,8 +52,6 @@ public class RouteGenerator{
         System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
     }
 
-    //normal calculation methods
-
     public boolean calculateShortestRoute() {
         Dijkstra dijkstra = new Dijkstra(Dijkstra.Element.EDGE, null, "length");
         Timestamp start = new Timestamp(System.currentTimeMillis());
@@ -191,8 +189,6 @@ public class RouteGenerator{
         return path;
     }
 
-    //A* methods
-
     public boolean calculateShortestRouteAStar() {
         Timestamp start = new Timestamp(System.currentTimeMillis());
         String startNodeName = startStation.getRailStation().getName();
@@ -277,7 +273,6 @@ public class RouteGenerator{
         return false;
     }
 
-    //heuristic function for A* algorithm
     private double heuristicCost(Node from, Node to) {
         Station startStation = null;
         Station endStation = null;
