@@ -2,9 +2,6 @@ package util.graph;
 
 import dto.Station;
 
-import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.List;
@@ -13,9 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.graphstream.graph.*;
 import org.graphstream.algorithm.Dijkstra;
-import org.graphstream.ui.view.View;
 import org.graphstream.ui.view.Viewer;
-import org.graphstream.ui.view.camera.Camera;
 
 /*For shortest path calculations, code taken from:
  * https://graphstream-project.org/doc/Algorithms/Shortest-path/Dijkstra/
@@ -33,6 +28,11 @@ import org.graphstream.ui.view.camera.Camera;
  *
  * Displaying the graph and user controls code taken from:
  * https://stackoverflow.com/questions/44675827/how-to-zoom-into-a-graphstream-view
+ *
+ * Least line changes algorithm code taken from:
+ * https://stackoverflow.com/questions/3137548/how-to-find-minimum-number-of-transfers-for-a-metro-or-railway-network
+ * https://github.com/wlxiong/k_shortest_bus_routes
+ * https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-in-java-using-priorityqueue
  */
 
 @Setter
@@ -105,7 +105,7 @@ public class RouteGenerator{
             //create path object
             Path path = new Path();
 
-            //initialize path with start node
+            //initialise path with start node
             path.setRoot(shortestPath.get(0));
             //add edges to the path
             for (int i = 0; i < shortestPath.size() - 1; i++) {
@@ -386,6 +386,7 @@ public class RouteGenerator{
                 Path path = new Path();
                 path.setRoot(pathNodes.get(0));
 
+                //add edges to the path based on the reconstructed nodes
                 for (int i = 0; i < pathNodes.size() - 1; i++) {
                     Node currentNode = pathNodes.get(i);
                     Node nextNode = pathNodes.get(i + 1);
@@ -447,11 +448,10 @@ public class RouteGenerator{
         return (int)(distance * 100);
     }
 
-    //general methods
-
     public void displayRoute() {
         try {
             Viewer viewer = graph.display();
+
             viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
             viewer.enableAutoLayout();
 
@@ -461,60 +461,22 @@ public class RouteGenerator{
             System.out.println("- Use arrow keys to pan the view");
             System.out.println("- Press 'r' to reset view");
 
-            //create a new thread to handle user input for zooming and panning
             new Thread(() -> {
                 try {
                     Thread.sleep(1000);
-                    View view = viewer.getDefaultView();
-                    if (view != null && view instanceof Component) {
-                        Component component = (Component) view;
-
-                        component.addMouseWheelListener(e -> {
-                            Camera camera = view.getCamera();
-                            double currentZoom = camera.getViewPercent();
-
-                            double zoomFactor = 0.05;
-
-                            //zoom in or out based on mouse wheel rotation
-                            if (e.getWheelRotation() < 0) {
-                                double newZoom = currentZoom * (1.0 - zoomFactor);
-                                camera.setViewPercent(Math.max(newZoom, 0.05));
-                            } else {
-                                double newZoom = currentZoom * (1.0 + zoomFactor);
-                                camera.setViewPercent(Math.min(newZoom, 3.0));
-                            }
-                        });
-
-                        component.addKeyListener(new KeyAdapter() {
-                            @Override
-                            public void keyPressed(KeyEvent e) {
-                                Camera camera = view.getCamera();
-
-                                switch (e.getKeyCode()) {
-                                    case KeyEvent.VK_R:
-                                        camera.resetView();
-                                        camera.setViewPercent(1.0);
-                                        break;
-                                }
-                            }
-                        });
-
-                        //request focus for the component to capture key events
-                        component.setFocusable(true);
-                        component.requestFocus();
-                    }
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }).start();
 
         } catch (Exception e) {
             System.err.println("Error displaying graph: " + e.getMessage());
+            e.printStackTrace();
         }
-
     }
 
     private void resetGraphEdges() {
+        //reset all edges to their original color
         graph.edges().forEach(edge -> {
             String originalColor = edge.getAttribute("original.color").toString();
             if (originalColor != null) {
@@ -529,6 +491,7 @@ public class RouteGenerator{
     private void setNodeStyle(Node startNode, Node endNode, Path path) {
         resetGraphEdges();
 
+        //style start and end nodes
         startNode.setAttribute("ui.style",
                 "fill-color: green; size: 15px; " +
                         "text-style: bold; text-color: black; text-size: 15px; " +
@@ -543,6 +506,7 @@ public class RouteGenerator{
 
         List<String> routeStations = new ArrayList<>();
 
+        //style nodes in the path
         List<Node> pathNodes = path.getNodePath();
         for (Node node : pathNodes) {
             if (!node.equals(startNode) && !node.equals(endNode)) {
@@ -559,6 +523,7 @@ public class RouteGenerator{
     }
 
     private void highlightRouteEdges(List<String> routeStations) {
+        //highlight edges between stations in the route
         for (int i = 0; i < routeStations.size() - 1; i++) {
             String station1 = routeStations.get(i);
             String station2 = routeStations.get(i + 1);
@@ -569,7 +534,8 @@ public class RouteGenerator{
             }
 
             if (edge != null) {
-                edge.setAttribute("ui.style", "fill-color: #FF4500; size: 3px;"); // Bright orange
+                //store original color for reset
+                edge.setAttribute("ui.style", "fill-color: #FF4500; size: 3px;");
             }
         }
     }
@@ -583,13 +549,16 @@ public class RouteGenerator{
 
         resetGraphEdges();
 
+        //check if start and end nodes are valid
         if (startNode == null || endNode == null) {
             System.err.println("No nodes found");
             return false;
         }
 
+        //find path with least line changes
         List<Node> pathWithLeastChanges = findPathWithLeastLineChanges(startNode, endNode);
 
+        //if a path is found, create a Path object and display it
         if (pathWithLeastChanges != null && pathWithLeastChanges.size() > 0) {
             Path path = new Path();
             path.setRoot(pathWithLeastChanges.get(0));
@@ -611,11 +580,14 @@ public class RouteGenerator{
                 }
             }
 
+            //style start and end nodes, and the path
             setNodeStyle(startNode, endNode, path);
 
+            //calculate the number of line changes
             int lineChanges = calculateLineChanges(pathWithLeastChanges);
 
             Timestamp end = new Timestamp(System.currentTimeMillis());
+            //print the results
             System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
             System.out.println("\nRoute with least line changes found:");
             System.out.println("Number of line changes: " + lineChanges);
@@ -623,6 +595,7 @@ public class RouteGenerator{
             System.out.println("Route: ");
             pathWithLeastChanges.forEach(node -> System.out.println("  -> " + node.getId()));
 
+            //display detailed line changes
             displayLineChanges(pathWithLeastChanges);
             return true;
         } else {
@@ -632,13 +605,11 @@ public class RouteGenerator{
     }
 
     private List<Node> findPathWithLeastLineChanges(Node start, Node end) {
-        PriorityQueue<PathWithChanges> queue = new PriorityQueue<>(
-                Comparator.comparingInt((PathWithChanges p) -> p.lineChanges)
-                        .thenComparingInt(p -> p.path.size())
-        );
+        //use a priority queue to explore paths with the least line changes first
+        PriorityQueue<PathWithChanges> queue = new PriorityQueue<>(Comparator.comparingInt((PathWithChanges p) -> p.lineChanges).thenComparingInt(p -> p.path.size()));
 
         Set<Node> visited = new HashSet<>();
-
+        //initialise the path with the start node
         PathWithChanges initialPath = new PathWithChanges();
         initialPath.path.add(start);
         initialPath.lineChanges = 0;
@@ -646,6 +617,7 @@ public class RouteGenerator{
 
         queue.offer(initialPath);
 
+        //BFS-like exploration
         while (!queue.isEmpty()) {
             PathWithChanges current = queue.poll();
             Node currentNode = current.path.get(current.path.size() - 1);
@@ -659,6 +631,7 @@ public class RouteGenerator{
             }
             visited.add(currentNode);
 
+            //explore neighbors
             for (Edge edge : currentNode.edges().toList()) {
                 Node neighbor = edge.getOpposite(currentNode);
 
@@ -667,10 +640,12 @@ public class RouteGenerator{
                     newPath.path.addAll(current.path);
                     newPath.path.add(neighbor);
 
+                    //get lines for the neighbor station
                     Set<String> neighborLines = getLinesForStation(neighbor.getId());
                     Set<String> commonLines = new HashSet<>(current.currentLines);
                     commonLines.retainAll(neighborLines);
 
+                    //if there are no common lines, it means a line change is needed
                     if (commonLines.isEmpty() && current.path.size() > 1) {
                         newPath.lineChanges = current.lineChanges + 1;
                         newPath.currentLines = neighborLines;
@@ -690,12 +665,16 @@ public class RouteGenerator{
     private Set<String> getLinesForStation(String stationName) {
         Set<String> lines = new HashSet<>();
 
+        //find the station by name
         for (Station station : stations) {
             if (station.getRailStation().getName().equals(stationName)) {
+                //if the station has rail lines, extract their names
                 if (station.getRailStation().getRailLines() != null) {
                     station.getRailStation().getRailLines().forEach(line -> {
+                        //extract the line name, if it exists
                         if (line.getName() != null) {
                             String lineName = extractLineName(line.getName());
+                            //add the line name to the set
                             if (lineName != null) {
                                 lines.add(lineName);
                             }
@@ -719,10 +698,12 @@ public class RouteGenerator{
     private int calculateLineChanges(List<Node> path) {
         if (path.size() <= 2) return 0;
 
+        //calculate the number of line changes in the path
         int changes = 0;
         Set<String> currentLines = getLinesForStation(path.get(0).getId());
 
         for (int i = 1; i < path.size(); i++) {
+            //get lines for the next station
             Set<String> nextLines = getLinesForStation(path.get(i).getId());
             Set<String> commonLines = new HashSet<>(currentLines);
             commonLines.retainAll(nextLines);
@@ -741,18 +722,21 @@ public class RouteGenerator{
     private void displayLineChanges(List<Node> path) {
         if (path.size() <= 1) return;
 
+        //display detailed route with line information
         System.out.println("\nDetailed route with line information:");
         Set<String> currentLines = getLinesForStation(path.get(0).getId());
 
         System.out.println("Start at: " + path.get(0).getId());
         System.out.println("Available lines: " + currentLines);
 
+        //iterate through the path and display line changes
         for (int i = 1; i < path.size(); i++) {
             Set<String> nextLines = getLinesForStation(path.get(i).getId());
             Set<String> commonLines = new HashSet<>(currentLines);
             commonLines.retainAll(nextLines);
 
             if (commonLines.isEmpty() && i > 1) {
+                //if there are no common lines, it means a line change is needed
                 System.out.println("\n*** LINE CHANGE at " + path.get(i-1).getId() + " ***");
                 System.out.println("From lines: " + currentLines);
                 System.out.println("To lines: " + nextLines);
@@ -761,11 +745,13 @@ public class RouteGenerator{
                 currentLines = commonLines;
             }
 
+            //display the current station and available lines
             System.out.println("-> " + path.get(i).getId() + " (Lines: " + currentLines + ")");
         }
     }
 
     private static class PathWithChanges {
+        //stores the path and the number of line changes
         List<Node> path = new ArrayList<>();
         int lineChanges = 0;
         Set<String> currentLines = new HashSet<>();

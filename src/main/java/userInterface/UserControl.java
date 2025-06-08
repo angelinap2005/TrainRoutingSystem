@@ -46,11 +46,19 @@ public class UserControl {
                     planRoute(true);
                     break;
                 case "4":
-                    planRouteWithLeastChanges();
+                    boolean success = planRouteWithLeastChanges();
+                    if (success) {
+                        viewMapOfRoute();
+                    }
+                    break;
+
                 case "5":
                     System.out.println("Thank you for using the London Transport System!");
                     System.exit(0);
                     break;
+                default:
+                    System.out.println("DEBUG: Invalid choice received: '" + input + "'");
+                    System.out.println("Please enter a valid option (1-5).");
             }
         } catch (Exception e) {
             System.out.println("An error occurred: " + e.getMessage());
@@ -103,42 +111,41 @@ public class UserControl {
         }
     }
 
-    private void planRouteWithLeastChanges(){
+    private boolean planRouteWithLeastChanges(){
         try {
             //error handling for empty input
             System.out.println("Please enter the name of the starting station: ");
             String start = scanner.nextLine();
             if (start == null || start.trim().isEmpty()) {
                 System.out.println("Starting station cannot be empty.");
-                return;
+                return false;
             }
 
             System.out.println("Please enter the name of the destination station: ");
             String end = scanner.nextLine();
             if (end == null || end.trim().isEmpty()) {
                 System.out.println("Destination station cannot be empty.");
-                return;
+                return false;
             }
 
-            //error handling for start and end being the same
             if (start.equalsIgnoreCase(end)) {
                 System.out.println("Start and destination stations cannot be the same.");
-                return;
+                return false;
             }
 
             boolean success = graphGenerator.planRoute(start, end, false, false, true);
+            return success;
 
-            if (success) {
-                viewMapOfRoute();
-            }
         } catch (Exception e) {
             System.out.println("Error planning route: " + e.getMessage());
         }
+        return false;
     }
 
-    private void viewMapOfRoute(){
+    private void viewMapOfRoute() {
         System.out.println("Would you like to view the map of the route? (y/n) ");
         String input = scanner.nextLine();
+
         if (input != null && input.equalsIgnoreCase("y")) {
             graphGenerator.printRoute();
         } else if (input != null && input.equalsIgnoreCase("n")) {
