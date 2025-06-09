@@ -71,7 +71,7 @@ public class GraphGenerator {
             }
         }
         try {
-            //add edges between stations
+            //!!CLEARS THE GRAPH JUST CREATED!!
             graph.clear();
             processedEdges.clear();
             addNodes(stations);
