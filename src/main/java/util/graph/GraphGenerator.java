@@ -110,7 +110,7 @@ public class GraphGenerator {
                     if (isValidRoute(route)) {
                         //check if destination station is null
                         String destStation = route.getDestination().getName();
-                        addEdgeSafely(sourceStation, destStation);
+                        addEdge(sourceStation, destStation);
                     }
                 } catch (Exception e) {
                     System.err.println("Error processing route from " + sourceStation + ": " + e.getMessage());
@@ -130,7 +130,7 @@ public class GraphGenerator {
     }
 
 
-    private void addEdgeSafely(String sourceStation, String destStation) {
+    private void addEdge(String sourceStation, String destStation) {
         String edgeId = sourceStation + "--" + destStation;
         String reverseEdgeId = destStation + "--" + sourceStation;
 

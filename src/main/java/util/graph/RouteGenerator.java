@@ -93,7 +93,7 @@ public class RouteGenerator{
         }
     }
 
-    private void printNoPathFound(String startNodeName, String endNodeName) {
+    private void displayNoRouteFound(String startNodeName, String endNodeName) {
         System.out.println("No path found between " + startNodeName + " and " + endNodeName);
     }
 
@@ -150,7 +150,7 @@ public class RouteGenerator{
             printRouteResults(start, "Shortest path", path, null, dijkstra.getPathLength(nodesResult.endNode));
             return true;
         } else {
-            printNoPathFound(nodesResult.startNodeName, nodesResult.endNodeName);
+            displayNoRouteFound(nodesResult.startNodeName, nodesResult.endNodeName);
         }
         return false;
     }
@@ -171,7 +171,7 @@ public class RouteGenerator{
             printRouteResults(start, "Route with least amount of stops", null, shortestPath, null);
             return true;
         } else {
-            printNoPathFound(nodesResult.startNodeName, nodesResult.endNodeName);
+            displayNoRouteFound(nodesResult.startNodeName, nodesResult.endNodeName);
             return false;
         }
     }
@@ -294,7 +294,7 @@ public class RouteGenerator{
             }
         }
 
-        printNoPathFound(nodesResult.startNodeName, nodesResult.endNodeName);
+        displayNoRouteFound(nodesResult.startNodeName, nodesResult.endNodeName);
         return false;
     }
 
@@ -434,7 +434,7 @@ public class RouteGenerator{
         }
 
         //if no path found
-        printNoPathFound(nodesResult.startNodeName, nodesResult.endNodeName);
+        displayNoRouteFound(nodesResult.startNodeName, nodesResult.endNodeName);
         return false;
     }
 
@@ -664,7 +664,7 @@ public class RouteGenerator{
             displayLineChanges(pathWithLeastChanges);
             return true;
         } else {
-            printNoPathFound(nodesResult.startNodeName, nodesResult.endNodeName);
+            displayNoRouteFound(nodesResult.startNodeName, nodesResult.endNodeName);
             return false;
         }
     }
@@ -816,6 +816,7 @@ public class RouteGenerator{
     }
 
     private static class NodesResult {
+        //stores the start and end nodes, and their names
         final Node startNode;
         final Node endNode;
         final String startNodeName;
