@@ -815,20 +815,7 @@ public class RouteGenerator{
         }
     }
 
-    private static class NodesResult {
-        //stores the start and end nodes, and their names
-        final Node startNode;
-        final Node endNode;
-        final String startNodeName;
-        final String endNodeName;
-
-        NodesResult(Node startNode, Node endNode, String startNodeName, String endNodeName) {
-            this.startNode = startNode;
-            this.endNode = endNode;
-            this.startNodeName = startNodeName;
-            this.endNodeName = endNodeName;
-        }
-    }
+    private record NodesResult(Node startNode, Node endNode, String startNodeName, String endNodeName) {}
 
     private static class PathWithChanges {
         //stores the path and the number of line changes
