@@ -788,7 +788,7 @@ public class RouteGenerator{
         if (path.size() <= 1) return;
 
         //display detailed route with line information
-        System.out.println("\nDetailed route with line information:");
+        System.out.println("\nDetailed route with line change information:");
         Set<String> currentLines = getLinesForStation(path.get(0).getId());
 
         System.out.println("Start at: " + path.get(0).getId());
@@ -802,7 +802,7 @@ public class RouteGenerator{
 
             if (commonLines.isEmpty() && i > 1) {
                 //if there are no common lines, it means a line change is needed
-                System.out.println("\n*** LINE CHANGE at " + path.get(i-1).getId() + " ***");
+                System.out.println("\nLine Change at: " + path.get(i-1).getId());
                 System.out.println("From lines: " + currentLines);
                 System.out.println("To lines: " + nextLines);
                 currentLines = nextLines;
