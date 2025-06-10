@@ -195,18 +195,6 @@ public class GraphGeneratorTest {
         assertTrue("Route planning should succeed for shortest route", result);
     }
 
-    @Test
-    public void planLeastStopsAStarTest() {
-        //generate the graph
-        graphGenerator.generateGraph(stations);
-
-        //plan a route using A* algorithm for the least stops
-        boolean result = graphGenerator.planRoute("Station A", "Station B", false, false, false);
-
-        //assert that the route planning was successful
-        assertTrue("Route planning should succeed for least stops route", result);
-    }
-
 
     @Test
     public void printValidRouteTest() {
@@ -258,25 +246,6 @@ public class GraphGeneratorTest {
         } catch (Exception e) {
             //if an exception is thrown, the test fails
             fail("resetEdgeColors should not throw exception: " + e.getMessage());
-        }
-    }
-
-    @Test
-    public void highlightRouteEdgesTest() {
-        //generate the graph
-        graphGenerator.generateGraph(stations);
-
-        //mock a route with stations
-        List<String> routeStations = Arrays.asList("Station A", "Station B", "Station C");
-
-        //attempt to highlight the route edges
-        try {
-            //highlight the edges of the route
-            graphGenerator.highlightRouteEdges(routeStations);
-            assertTrue("highlightRouteEdges should execute without exception", true);
-        } catch (Exception e) {
-            //if an exception is thrown, the test fails
-            fail("highlightRouteEdges should not throw exception: " + e.getMessage());
         }
     }
 

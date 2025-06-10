@@ -71,9 +71,6 @@ public class GraphGenerator {
             }
         }
         try {
-            //!!CLEARS THE GRAPH JUST CREATED!!
-            graph.clear();
-            processedEdges.clear();
             addNodes(stations);
             addEdges(stations);
         } catch (Exception e) {
@@ -173,27 +170,6 @@ public class GraphGenerator {
                 edge.setAttribute("ui.style", "fill-color: " + originalColor + ";");
             }
         });
-    }
-
-    public void highlightRouteEdges(List<String> routeStations) {
-        resetEdgeColors();
-
-        //highlight the edges of the route
-        for (int i = 0; i < routeStations.size() - 1; i++) {
-            String station1 = routeStations.get(i);
-            String station2 = routeStations.get(i + 1);
-
-            //check if the edge exists in either direction
-            Edge edge = graph.getEdge(station1 + "--" + station2);
-            if (edge == null) {
-                edge = graph.getEdge(station2 + "--" + station1);
-            }
-
-            if (edge != null) {
-                //set the edge style to highlight it
-                edge.setAttribute("ui.style", "fill-color: #FF4500; size: 3px;");
-            }
-        }
     }
 
     private String getEdgeColor(String sourceStation, String destStation) {
@@ -317,13 +293,11 @@ public class GraphGenerator {
                 "graph { padding: 50px; } " +
                         "node { " +
                         "size: 10px; " +
-                        "fill-color: #888888; " +
+                        "fill-color: #999999; " +
                         "text-style: bold; " +
                         "text-color: black; " +
                         "text-size: 15px; " +
                         "text-offset: 5px, 5px; " +
-                        "text-background-mode: rounded-box; " +
-                        "text-background-color: rgba(240, 240, 240, 200); " +
                         "text-padding: 3px; " +
                         "} " +
                         "edge { " +

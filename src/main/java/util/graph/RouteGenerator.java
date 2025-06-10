@@ -1,7 +1,9 @@
+
 package util.graph;
 
 import dto.Station;
 
+import java.awt.*;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.List;
@@ -10,7 +12,11 @@ import lombok.Getter;
 import lombok.Setter;
 import org.graphstream.graph.*;
 import org.graphstream.algorithm.Dijkstra;
+import org.graphstream.ui.geom.Point3;
+import org.graphstream.ui.layout.springbox.implementations.SpringBox;
+import org.graphstream.ui.view.View;
 import org.graphstream.ui.view.Viewer;
+import org.graphstream.ui.view.camera.Camera;
 
 /*For shortest path calculations, code taken from:
  * https://graphstream-project.org/doc/Algorithms/Shortest-path/Dijkstra/
@@ -52,91 +58,121 @@ public class RouteGenerator{
         System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
     }
 
-    public boolean calculateShortestRoute() {
-        Dijkstra dijkstra = new Dijkstra(Dijkstra.Element.EDGE, null, "length");
-        Timestamp start = new Timestamp(System.currentTimeMillis());
+    private NodesResult getAndValidateNodes() {
         String startNodeName = startStation.getRailStation().getName();
         Node startNode = graph.getNode(startNodeName);
         String endNodeName = endStation.getRailStation().getName();
         Node endNode = graph.getNode(endNodeName);
 
-        resetGraphEdges();
-
-        dijkstra.init(graph);
         if (startNode == null || endNode == null) {
             System.err.println("No nodes found");
-            return false;
+            return null;
         }
 
-        dijkstra.setSource(startNode);
-        //calculate the shortest path
-        dijkstra.compute();
-
-        Path path = dijkstra.getPath(endNode);
-        if (path != null) {
-            setNodeStyle(startNode, endNode, path);
-            Timestamp end = new Timestamp(System.currentTimeMillis());
-            //print the shortest path
-            System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
-            System.out.println("\nShortest path found:");
-            System.out.printf("Total distance: %.2f km%n", dijkstra.getPathLength(endNode));
-            System.out.println("Route: ");
-            path.nodes().forEach(node -> System.out.println("  -> " + node.getId()));
-        } else {
-            System.out.println("No path found between " + startNodeName + " and " + endNodeName);
-        }
-        return path != null;
+        return new NodesResult(startNode, endNode, startNodeName, endNodeName);
     }
 
+    private void printRouteResults(Timestamp start, String routeType, Path path, List<Node> pathNodes, Double distance) {
+        Timestamp end = new Timestamp(System.currentTimeMillis());
+        //print the shortest path
+        System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
+        System.out.println("\n" + routeType + " found:");
 
-    public boolean calculateLeastStationStops(){
-        Timestamp start = new Timestamp(System.currentTimeMillis());
-        String startNodeName = startStation.getRailStation().getName();
-        Node startNode = graph.getNode(startNodeName);
-        String endNodeName = endStation.getRailStation().getName();
-        Node endNode = graph.getNode(endNodeName);
+        if (distance != null) {
+            System.out.printf("Total distance: %.2f km%n", distance);
+        }
+        if (pathNodes != null && pathNodes.size() > 1) {
+            System.out.println("Number of stops: " + (pathNodes.size() - 1));
+        }
 
-        resetGraphEdges();
-        List<Node> shortestPath = explore(startNode, endNode);
+        System.out.println("Route: ");
+        if (path != null) {
+            path.nodes().forEach(node -> System.out.println("  -> " + node.getId()));
+        } else if (pathNodes != null) {
+            pathNodes.forEach(node -> System.out.println("  -> " + node.getId()));
+        }
+    }
 
-        if (shortestPath != null && shortestPath.size() > 0) {
-            //create path object
-            Path path = new Path();
+    private void printNoPathFound(String startNodeName, String endNodeName) {
+        System.out.println("No path found between " + startNodeName + " and " + endNodeName);
+    }
 
-            //initialise path with start node
-            path.setRoot(shortestPath.get(0));
-            //add edges to the path
-            for (int i = 0; i < shortestPath.size() - 1; i++) {
-                Node current = shortestPath.get(i);
-                Node next = shortestPath.get(i + 1);
+    private Path createPathFromNodes(List<Node> nodeList) {
+        if (nodeList == null || nodeList.isEmpty()) {
+            return null;
+        }
 
-                //find edge connecting the two nodes
-                Edge connectingEdge = null;
-                for (Edge edge : current.edges().toList()) {
-                    if (edge.getOpposite(current).equals(next)) {
-                        connectingEdge = edge;
-                        break;
-                    }
-                }
+        //create path object
+        Path path = new Path();
 
-                if (connectingEdge != null) {
-                    //add edge to path
-                    path.add(connectingEdge);
+        //initialise path with start node
+        path.setRoot(nodeList.get(0));
+        //add edges to the path
+        for (int i = 0; i < nodeList.size() - 1; i++) {
+            Node current = nodeList.get(i);
+            Node next = nodeList.get(i + 1);
+
+            //find edge connecting the two nodes
+            Edge connectingEdge = null;
+            for (Edge edge : current.edges().toList()) {
+                if (edge.getOpposite(current).equals(next)) {
+                    connectingEdge = edge;
+                    break;
                 }
             }
 
-            setNodeStyle(startNode, endNode, path);
+            if (connectingEdge != null) {
+                //add edge to path
+                path.add(connectingEdge);
+            }
+        }
 
-            Timestamp end = new Timestamp(System.currentTimeMillis());
-            System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
-            System.out.println("\nRoute with least amount of stops found:");
-            System.out.println("Number of stops: " + (shortestPath.size() - 1));
-            System.out.println("Route: ");
-            shortestPath.forEach(node -> System.out.println("  -> " + node.getId()));
-            return shortestPath != null;
+        return path;
+    }
+
+    public boolean calculateShortestRoute() {
+        Dijkstra dijkstra = new Dijkstra(Dijkstra.Element.EDGE, null, "length");
+        Timestamp start = new Timestamp(System.currentTimeMillis());
+
+        NodesResult nodesResult = getAndValidateNodes();
+        if (nodesResult == null) {
+            return false;
+        }
+
+        dijkstra.init(graph);
+        dijkstra.setSource(nodesResult.startNode);
+        //calculate the shortest path
+        dijkstra.compute();
+
+        Path path = dijkstra.getPath(nodesResult.endNode);
+        if (path != null) {
+            setNodeStyle(nodesResult.startNode, nodesResult.endNode, path);
+            printRouteResults(start, "Shortest path", path, null, dijkstra.getPathLength(nodesResult.endNode));
+            return true;
         } else {
-            System.out.println("No path found between " + startNodeName + " and " + endNodeName);
-            return shortestPath == null;
+            printNoPathFound(nodesResult.startNodeName, nodesResult.endNodeName);
+        }
+        return false;
+    }
+
+    public boolean calculateLeastStationStops(){
+        Timestamp start = new Timestamp(System.currentTimeMillis());
+
+        NodesResult nodesResult = getAndValidateNodes();
+        if (nodesResult == null) {
+            return false;
+        }
+
+        List<Node> shortestPath = explore(nodesResult.startNode, nodesResult.endNode);
+
+        if (shortestPath != null && shortestPath.size() > 0) {
+            Path path = createPathFromNodes(shortestPath);
+            setNodeStyle(nodesResult.startNode, nodesResult.endNode, path);
+            printRouteResults(start, "Route with least amount of stops", null, shortestPath, null);
+            return true;
+        } else {
+            printNoPathFound(nodesResult.startNodeName, nodesResult.endNodeName);
+            return false;
         }
     }
 
@@ -191,11 +227,12 @@ public class RouteGenerator{
 
     public boolean calculateShortestRouteAStar() {
         Timestamp start = new Timestamp(System.currentTimeMillis());
-        String startNodeName = startStation.getRailStation().getName();
-        Node startNode = graph.getNode(startNodeName);
-        String endNodeName = endStation.getRailStation().getName();
-        Node endNode = graph.getNode(endNodeName);
-        //A* starting setup
+
+        NodesResult nodesResult = getAndValidateNodes();
+        if (nodesResult == null) {
+            return false;
+        }
+
         //cost from start to current node (gScore)
         Map<Node, Double> gScore = new HashMap<>();
         //estimated cost from start to end through current node (fScore)
@@ -205,37 +242,25 @@ public class RouteGenerator{
         //priority queue for open set (nodes to be evaluated)
         PriorityQueue<Node> openSet = new PriorityQueue<>(Comparator.comparingDouble(node -> fScore.getOrDefault(node, Double.MAX_VALUE)));
 
-        resetGraphEdges();
-
-        if (startNode == null || endNode == null) {
-            System.err.println("No nodes found");
-            return false;
-        }
-
         //initialise scores for all nodes
         for (Node node : graph) {
             gScore.put(node, Double.MAX_VALUE);
             fScore.put(node, Double.MAX_VALUE);
         }
-        gScore.put(startNode, 0.0);
-        fScore.put(startNode, heuristicCost(startNode, endNode));
-        openSet.add(startNode);
+        gScore.put(nodesResult.startNode, 0.0);
+        fScore.put(nodesResult.startNode, heuristicCost(nodesResult.startNode, nodesResult.endNode));
+        openSet.add(nodesResult.startNode);
 
         while (!openSet.isEmpty()) {
             Node current = openSet.poll();
 
-            if (current.equals(endNode)) {
+            if (current.equals(nodesResult.endNode)) {
                 //path found, construct and display it
                 //reconstruct the path from end to start to get the correct order
-                Path path = reconstructPathAStar(cameFrom, startNode, endNode);
-                setNodeStyle(startNode, endNode, path);
-                Timestamp end = new Timestamp(System.currentTimeMillis());
-                System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
-                System.out.println("\nShortest path found:");
-                System.out.printf("Total distance: %.2f km%n", gScore.get(endNode));
-                System.out.println("Route: ");
-                path.nodes().forEach(node -> System.out.println("  -> " + node.getId()));
-                return path != null;
+                Path path = reconstructPathAStar(cameFrom, nodesResult.startNode, nodesResult.endNode);
+                setNodeStyle(nodesResult.startNode, nodesResult.endNode, path);
+                printRouteResults(start, "Shortest path", path, null, gScore.get(nodesResult.endNode));
+                return true;
             }
 
             closedSet.add(current);
@@ -256,7 +281,7 @@ public class RouteGenerator{
                     //this path to neighbor is better
                     cameFrom.put(neighbor, current);
                     gScore.put(neighbor, tentativeGScore);
-                    fScore.put(neighbor, tentativeGScore + heuristicCost(neighbor, endNode));
+                    fScore.put(neighbor, tentativeGScore + heuristicCost(neighbor, nodesResult.endNode));
 
                     if (!openSet.contains(neighbor)) {
                         openSet.add(neighbor);
@@ -269,7 +294,7 @@ public class RouteGenerator{
             }
         }
 
-        System.out.println("No path found between " + startNodeName + " and " + endNodeName);
+        printNoPathFound(nodesResult.startNodeName, nodesResult.endNodeName);
         return false;
     }
 
@@ -339,17 +364,12 @@ public class RouteGenerator{
 
     public boolean calculateLeastStationStopsAStar() {
         Timestamp start = new Timestamp(System.currentTimeMillis());
-        String startNodeName = startStation.getRailStation().getName();
-        Node startNode = graph.getNode(startNodeName);
-        String endNodeName = endStation.getRailStation().getName();
-        Node endNode = graph.getNode(endNodeName);
 
-        resetGraphEdges();
-
-        if (startNode == null || endNode == null) {
-            System.err.println("No nodes found");
+        NodesResult nodesResult = getAndValidateNodes();
+        if (nodesResult == null) {
             return false;
         }
+
         //A* starting setup for fewest stops
         Map<Node, Integer> gScore = new HashMap<>();
         Map<Node, Node> cameFrom = new HashMap<>();
@@ -357,19 +377,19 @@ public class RouteGenerator{
 
         //priority queue for an open set (nodes to be evaluated)
         PriorityQueue<Node> openSet = new PriorityQueue<>((a, b) -> {
-            int fScoreA = gScore.getOrDefault(a, Integer.MAX_VALUE) + estimateStopsToGoal(a, endNode);
-            int fScoreB = gScore.getOrDefault(b, Integer.MAX_VALUE) + estimateStopsToGoal(b, endNode);
+            int fScoreA = gScore.getOrDefault(a, Integer.MAX_VALUE) + estimateStopsToGoal(a, nodesResult.endNode);
+            int fScoreB = gScore.getOrDefault(b, Integer.MAX_VALUE) + estimateStopsToGoal(b, nodesResult.endNode);
             return Integer.compare(fScoreA, fScoreB);
         });
 
-        gScore.put(startNode, 0);
-        openSet.add(startNode);
+        gScore.put(nodesResult.startNode, 0);
+        openSet.add(nodesResult.startNode);
 
         //initialise gScore for all nodes
         while (!openSet.isEmpty()) {
             Node current = openSet.poll();
 
-            if (current.equals(endNode)) {
+            if (current.equals(nodesResult.endNode)) {
                 List<Node> pathNodes = new ArrayList<>();
                 Node node = current;
 
@@ -378,30 +398,11 @@ public class RouteGenerator{
                     node = cameFrom.get(node);
                 }
 
-                Path path = new Path();
-                path.setRoot(pathNodes.get(0));
-
-                //add edges to the path based on the reconstructed nodes
-                for (int i = 0; i < pathNodes.size() - 1; i++) {
-                    Node currentNode = pathNodes.get(i);
-                    Node nextNode = pathNodes.get(i + 1);
-
-                    for (Edge edge : currentNode.edges().toList()) {
-                        if (edge.getOpposite(currentNode).equals(nextNode)) {
-                            path.add(edge);
-                            break;
-                        }
-                    }
-                }
+                Path path = createPathFromNodes(pathNodes);
 
                 //style start and end nodes
-                setNodeStyle(startNode, endNode, path);
-                Timestamp end = new Timestamp(System.currentTimeMillis());
-                System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
-                System.out.println("\nRoute with least amount of stops found:");
-                System.out.println("Number of stops: " + (pathNodes.size() - 1));
-                System.out.println("Route: ");
-                pathNodes.forEach(n -> System.out.println("  -> " + n.getId()));
+                setNodeStyle(nodesResult.startNode, nodesResult.endNode, path);
+                printRouteResults(start, "Route with least amount of stops", null, pathNodes, null);
                 return path != null;
             }
 
@@ -433,7 +434,7 @@ public class RouteGenerator{
         }
 
         //if no path found
-        System.out.println("No path found between " + startNodeName + " and " + endNodeName);
+        printNoPathFound(nodesResult.startNodeName, nodesResult.endNodeName);
         return false;
     }
 
@@ -445,29 +446,124 @@ public class RouteGenerator{
 
     public void displayRoute() {
         try {
+            //generate the graph
+            configureGraphStyles();
             Viewer viewer = graph.display();
-
             viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
-            viewer.enableAutoLayout();
 
-            //user controls for the graph
+            //set the default view
+            SpringBox layout = new SpringBox(false);
+            layout.setForce(0.7);
+            layout.setQuality(1);
+            layout.setStabilizationLimit(0.9);
+            viewer.enableAutoLayout(layout);
+
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    viewer.disableAutoLayout();
+                }
+            }, 3000);
+
             System.out.println("\nGraph Controls:");
             System.out.println("- Use mouse wheel to zoom in/out");
             System.out.println("- Use arrow keys to pan the view");
-            System.out.println("- Press 'r' to reset view");
+            System.out.println("- Press shift 'r' to reset view");
 
             new Thread(() -> {
                 try {
                     Thread.sleep(1000);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                    View view = viewer.getDefaultView();
+
+                    if (view != null && view instanceof Component) {
+                        Component component = (Component) view;
+
+                        //enable mouse wheel zooming
+                        component.addMouseWheelListener(e -> {
+                            Camera camera = view.getCamera();
+                            double currentZoom = camera.getViewPercent();
+                            double zoomFactor = 0.05;
+                            Point3 center = camera.getViewCenter();
+
+                            //check if the mouse wheel rotation is negative (zooming in) or positive (zooming out)
+                            if (e.getWheelRotation() < 0) {
+                                double newZoom = currentZoom * (1.0 - zoomFactor);
+                                newZoom = Math.max(newZoom, 0.05);
+
+                                camera.setAutoFitView(false);
+                                camera.setViewPercent(newZoom);
+
+                                //set the viewport size based on the new zoom level
+                                double viewportSize = Math.max(20, 10/newZoom);
+                                camera.setGraphViewport(-viewportSize, -viewportSize, viewportSize, viewportSize);
+
+                                double finalNewZoom = newZoom;
+                                graph.nodes().forEach(node -> {
+                                    double scale = Math.min(1.5, 1.0/ finalNewZoom * 0.3);
+                                    node.setAttribute("ui.size", 10 * scale);
+                                    node.setAttribute("ui.style", "text-size: 12px; z-index: 1000;");
+                                });
+                            } else {
+                                //zoom out
+                                double newZoom = currentZoom * (1.0 + zoomFactor);
+                                newZoom = Math.min(newZoom, 3.0);
+                                camera.setViewPercent(newZoom);
+
+                                //set the viewport size based on the new zoom level
+                                graph.nodes().forEach(node -> {
+                                    node.setAttribute("ui.size", 10);
+                                    node.setAttribute("ui.style", "text-size: 12px; z-index: 100;");
+                                });
+                            }
+
+                            //recenter the camera after zooming
+                            camera.setViewCenter(center.x, center.y, 0);
+                        });
+
+                        //request focus on the component to enable keyboard controls
+                        component.setFocusable(true);
+                        component.requestFocus();
+                    }
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
                 }
             }).start();
 
         } catch (Exception e) {
+            //handle any exceptions that occur during graph generation or display
             System.err.println("Error displaying graph: " + e.getMessage());
-            e.printStackTrace();
         }
+    }
+
+    private void configureGraphStyles() {
+        //set graph attributes
+        graph.setAttribute("ui.quality");
+        graph.setAttribute("ui.antialias");
+
+        //set the stylesheet for the graph
+        String stylesheet =
+                "graph { padding: 50px; } " +
+                        "node { " +
+                        "size: 10px; " +
+                        "fill-color: #999999; " +
+                        "text-style: bold; " +
+                        "text-color: black; " +
+                        "text-size: 15px; " +
+                        "text-offset: 5px, 5px; " +
+                        "text-padding: 3px; " +
+                        "} " +
+                        "edge { " +
+                        "arrow-size: 5px, 4px; " +
+                        "size-mode: dyn-size; " +
+                        "size: 2px; " +
+                        "}";
+
+        graph.setAttribute("ui.stylesheet", stylesheet);
+
+        //set default edge attributes
+        graph.edges().forEach(edge -> {
+            edge.setAttribute("weight", 2.0);
+        });
     }
 
     private void resetGraphEdges() {
@@ -481,7 +577,6 @@ public class RouteGenerator{
             }
         });
     }
-
 
     private void setNodeStyle(Node startNode, Node endNode, Path path) {
         resetGraphEdges();
@@ -537,46 +632,21 @@ public class RouteGenerator{
 
     public boolean calculateLeastChanges() {
         Timestamp start = new Timestamp(System.currentTimeMillis());
-        String startNodeName = startStation.getRailStation().getName();
-        Node startNode = graph.getNode(startNodeName);
-        String endNodeName = endStation.getRailStation().getName();
-        Node endNode = graph.getNode(endNodeName);
 
-        resetGraphEdges();
-
-        //check if start and end nodes are valid
-        if (startNode == null || endNode == null) {
-            System.err.println("No nodes found");
+        NodesResult nodesResult = getAndValidateNodes();
+        if (nodesResult == null) {
             return false;
         }
 
         //find path with least line changes
-        List<Node> pathWithLeastChanges = findPathWithLeastLineChanges(startNode, endNode);
+        List<Node> pathWithLeastChanges = findPathWithLeastLineChanges(nodesResult.startNode, nodesResult.endNode);
 
         //if a path is found, create a Path object and display it
         if (pathWithLeastChanges != null && pathWithLeastChanges.size() > 0) {
-            Path path = new Path();
-            path.setRoot(pathWithLeastChanges.get(0));
-
-            for (int i = 0; i < pathWithLeastChanges.size() - 1; i++) {
-                Node current = pathWithLeastChanges.get(i);
-                Node next = pathWithLeastChanges.get(i + 1);
-
-                Edge connectingEdge = null;
-                for (Edge edge : current.edges().toList()) {
-                    if (edge.getOpposite(current).equals(next)) {
-                        connectingEdge = edge;
-                        break;
-                    }
-                }
-
-                if (connectingEdge != null) {
-                    path.add(connectingEdge);
-                }
-            }
+            Path path = createPathFromNodes(pathWithLeastChanges);
 
             //style start and end nodes, and the path
-            setNodeStyle(startNode, endNode, path);
+            setNodeStyle(nodesResult.startNode, nodesResult.endNode, path);
 
             //calculate the number of line changes
             int lineChanges = calculateLineChanges(pathWithLeastChanges);
@@ -594,7 +664,7 @@ public class RouteGenerator{
             displayLineChanges(pathWithLeastChanges);
             return true;
         } else {
-            System.out.println("No path found between " + startNodeName + " and " + endNodeName);
+            printNoPathFound(nodesResult.startNodeName, nodesResult.endNodeName);
             return false;
         }
     }
@@ -742,6 +812,20 @@ public class RouteGenerator{
 
             //display the current station and available lines
             System.out.println("-> " + path.get(i).getId() + " (Lines: " + currentLines + ")");
+        }
+    }
+
+    private static class NodesResult {
+        final Node startNode;
+        final Node endNode;
+        final String startNodeName;
+        final String endNodeName;
+
+        NodesResult(Node startNode, Node endNode, String startNodeName, String endNodeName) {
+            this.startNode = startNode;
+            this.endNode = endNode;
+            this.startNodeName = startNodeName;
+            this.endNodeName = endNodeName;
         }
     }
 

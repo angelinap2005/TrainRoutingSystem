@@ -18,14 +18,13 @@ import java.util.*;
 @Setter
 public class GraphObjectGenerator {
     private List<Station> stations;
-    private Map<String, List<RailStation>> lineToStationsMap;
     private Map<String, Map<String, Double>> stationDistances;
+    private Map<String, List<RailStation>> lineToStationsMap;
     private ArrayList<RailLine> railLines;
     private ArrayList<RailStation> railStations;
 
     public GraphObjectGenerator(ArrayList<RailLine> railLines, ArrayList<RailStation> railStations) {
         stations = new ArrayList<>();
-        lineToStationsMap = new HashMap<>();
         stationDistances = new HashMap<>();
         this.railLines = railLines;
         this.railStations = railStations;
@@ -42,7 +41,7 @@ public class GraphObjectGenerator {
     }
 
     private void buildStationMaps() {
-
+        lineToStationsMap = new HashMap<>();
         for (RailLine line : railLines) {
             //ensure the line is not null and has a valid name
             if (line != null && line.getName() != null) {
