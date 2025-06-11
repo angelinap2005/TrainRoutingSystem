@@ -403,7 +403,7 @@ public class RouteGenerator{
                 //style start and end nodes
                 setNodeStyle(nodesResult.startNode, nodesResult.endNode, path);
                 printRouteResults(start, "Route with least amount of stops", null, pathNodes, null);
-                return path != null;
+                return true;
             }
 
             closedSet.add(current);
