@@ -75,7 +75,7 @@ public class RailSystemTest {
         //call the method to set rail lines
         RailSystem.setRailLines(railLines, railStations);
 
-       //verify that the rail line was added to the station
+        //verify that the rail line was added to the station
         assertEquals(1, station.getRailLines().size());
         assertEquals("Weaver - Stoke Newington to Stamford Hill", station.getRailLines().get(0).getName());
     }
@@ -85,7 +85,6 @@ public class RailSystemTest {
         ArrayList<RailLine> railLines = new ArrayList<>();
         ArrayList<RailStation> railStations = new ArrayList<>();
 
-        //call the method to set rail lines with empty lists
         RailSystem.setRailLines(railLines, railStations);
     }
 

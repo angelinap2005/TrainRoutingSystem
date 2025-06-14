@@ -118,13 +118,11 @@ public class RouteGeneratorTest {
     @Test
     public void shortestRouteValidTest() {
         boolean result = routeGenerator.calculateShortestRoute();
-        //the shortest route from Station1 to Station4 is via Station2 and Station3
         assertTrue("Should find shortest route between connected stations", result);
     }
 
     @Test
     public void shortestRouteMissingNodesTest() {
-        //create a graph with no edges
         Graph emptyGraph = new SingleGraph("EmptyGraph");
         RouteGenerator emptyGenerator = new RouteGenerator(stations, startStation, endStation, emptyGraph);
 
@@ -135,24 +133,20 @@ public class RouteGeneratorTest {
     @Test
     public void leastStopsValidTest() {
         boolean result = routeGenerator.calculateLeastStationStops();
-        //the least stops route from Station1 to Station4 is via Station2 and Station3
         assertTrue("Should find route with least stops between connected stations", result);
     }
 
     @Test
     public void shortestRouteAStarValidTest() {
         boolean result = routeGenerator.calculateShortestRouteAStar();
-        //the shortest route from Station1 to Station4 is via Station2 and Station3
         assertTrue("Should find shortest route using A* algorithm", result);
     }
 
     @Test
     public void shortestRouteAStarMissingNodesTest() {
         Graph emptyGraph = new SingleGraph("EmptyGraph");
-        //create a RouteGenerator with an empty graph
         RouteGenerator emptyGenerator = new RouteGenerator(stations, startStation, endStation, emptyGraph);
 
-        //attempt to calculate shortest route using A* algorithm
         boolean result = emptyGenerator.calculateShortestRouteAStar();
         assertFalse("Should return false when nodes don't exist in graph", result);
     }
@@ -163,62 +157,51 @@ public class RouteGeneratorTest {
         disconnectedGraph.addNode("Station1");
         disconnectedGraph.addNode("Station4");
 
-        //create a RouteGenerator with a disconnected graph
         RouteGenerator disconnectedGenerator = new RouteGenerator(stations, startStation, endStation, disconnectedGraph);
         boolean result = disconnectedGenerator.calculateShortestRouteAStar();
 
-        //should return false since there are no edges between the nodes
         assertFalse("Should return false when no path exists", result);
     }
 
     @Test
     public void leastStopsAStarValidTest() {
         boolean result = routeGenerator.calculateLeastStationStopsAStar();
-        //the least stops route from Station1 to Station4 is via Station2 and Station3
         assertTrue("Should find route with least stops using A* algorithm", result);
     }
 
     @Test
     public void leastStopsAStarMissingNodesTest() {
         Graph emptyGraph = new SingleGraph("EmptyGraph");
-        //create a RouteGenerator with an empty graph
         RouteGenerator emptyGenerator = new RouteGenerator(stations, startStation, endStation, emptyGraph);
 
-        //attempt to calculate least stops using A* algorithm
         boolean result = emptyGenerator.calculateLeastStationStopsAStar();
         assertFalse("Should return false when nodes don't exist in graph", result);
     }
 
     @Test
     public void leastStationAStarNoPathTest() {
-        //create a disconnected graph
         Graph disconnectedGraph = new SingleGraph("DisconnectedGraph");
         disconnectedGraph.addNode("Station1");
         disconnectedGraph.addNode("Station4");
 
-        //create a RouteGenerator with a disconnected graph
         RouteGenerator disconnectedGenerator = new RouteGenerator(stations, startStation, endStation, disconnectedGraph);
         boolean result = disconnectedGenerator.calculateLeastStationStopsAStar();
 
-        //should return false since there are no edges between the nodes
         assertFalse("Should return false when no path exists", result);
     }
 
     @Test
     public void leastChangesValidTest() {
-        //test the least changes calculation
         boolean result = routeGenerator.calculateLeastChanges();
         assertTrue("Should find route with least line changes", result);
     }
 
     @Test
     public void leastChangesNoPathTest() {
-        //create a disconnected graph
         Graph disconnectedGraph = new SingleGraph("DisconnectedGraph");
         disconnectedGraph.addNode("IsolatedStation1");
         disconnectedGraph.addNode("IsolatedStation2");
 
-        //create isolated rail stations with no connections
         RailStation isolatedRailStation1 = mock(RailStation.class);
         when(isolatedRailStation1.getName()).thenReturn("IsolatedStation1");
         when(isolatedRailStation1.getRailLines()).thenReturn(new ArrayList<>());
@@ -237,40 +220,32 @@ public class RouteGeneratorTest {
         isolatedStations.add(isolatedStart);
         isolatedStations.add(isolatedEnd);
 
-        //create a RouteGenerator with the isolated stations and disconnected graph
         RouteGenerator isolatedGenerator = new RouteGenerator(isolatedStations, isolatedStart, isolatedEnd, disconnectedGraph);
         boolean result = isolatedGenerator.calculateLeastChanges();
 
-        //should return false since there are no connections between the stations
         assertFalse("Should return false when no path exists", result);
     }
 
     @Test
     public void leastChangesEmptyPathTest() {
-        //create a graph with no nodes or edges
         Graph emptyGraph = new SingleGraph("EmptyGraph");
 
-        //create a RouteGenerator with an empty graph
         RouteGenerator emptyGenerator = new RouteGenerator(stations, startStation, endStation, emptyGraph);
         boolean result = emptyGenerator.calculateLeastChanges();
 
-        //should return false since there are no nodes in the graph
         assertFalse("Should return false when nodes don't exist in graph", result);
     }
 
     @Test
     public void leastChangesSameLineTest() {
-        //create a graph with two stations on the same line
         Graph sameLineGraph = new SingleGraph("SameLineGraph");
         sameLineGraph.addNode("Station1");
         sameLineGraph.addNode("Station2");
 
-        //create an edge between the two stations
         Edge edge = sameLineGraph.addEdge("Edge12", "Station1", "Station2", false);
         edge.setAttribute("length", 5.0);
         edge.setAttribute("original.color", "#0000FF");
 
-        //both stations are on the same rail line
         RailLine centralLine = mock(RailLine.class);
         when(centralLine.getName()).thenReturn("Central");
 
@@ -296,11 +271,9 @@ public class RouteGeneratorTest {
         sameLineStations.add(startStn);
         sameLineStations.add(endStn);
 
-        //create a RouteGenerator for the same line stations
         RouteGenerator sameLineGenerator = new RouteGenerator(sameLineStations, startStn, endStn, sameLineGraph);
         boolean result = sameLineGenerator.calculateLeastChanges();
 
-        //should return true since both stations are on the same line
         assertTrue("Should find route with no line changes", result);
     }
 
@@ -308,11 +281,9 @@ public class RouteGeneratorTest {
     @Test
     public void displayValidGraphTest() {
         try {
-            //test the displayRoute method with a valid graph
             routeGenerator.displayRoute();
             assertTrue("displayRoute should execute without throwing exception", true);
         } catch (Exception e) {
-            //if an exception is thrown, the test should fail
             fail("displayRoute should not throw exception: " + e.getMessage());
         }
     }
@@ -320,36 +291,30 @@ public class RouteGeneratorTest {
     @Test
     public void displayEmptyGraphTest() {
         Graph emptyGraph = new SingleGraph("EmptyGraph");
-        //create a RouteGenerator with an empty graph
         RouteGenerator emptyGenerator = new RouteGenerator(stations, startStation, endStation, emptyGraph);
 
         try {
-            //test the displayRoute method with an empty graph
             emptyGenerator.displayRoute();
             assertTrue("displayRoute should handle empty graph gracefully", true);
         } catch (Exception e) {
-            // if an exception is thrown, the test should pass
             assertTrue("Exception is acceptable for empty graph", true);
         }
     }
 
     @Test
     public void heuristicCostValidTest() {
-        //test the heuristic cost calculation with valid coordinates
         boolean result = routeGenerator.calculateShortestRouteAStar();
         assertTrue("A* algorithm should work with valid coordinates", result);
     }
 
     @Test
     public void lineExtractionComplexNameTest() {
-        //test the line extraction with complex line names
         boolean result = routeGenerator.calculateLeastChanges();
         assertTrue("Should handle complex line names correctly", result);
     }
 
     @Test
     public void longPathTest() {
-        //create a longer path with more stations and edges
         Graph longGraph = new SingleGraph("LongGraph");
 
         for (int i = 1; i <= 10; i++) {
@@ -362,7 +327,6 @@ public class RouteGeneratorTest {
             edge.setAttribute("original.color", "#0000FF");
         }
 
-        //create a start station and an end station for the long path
         RailStation longEndStation = mock(RailStation.class);
         when(longEndStation.getName()).thenReturn("Station10");
         when(longEndStation.getCoordinates()).thenReturn(new Double[]{10.0, 10.0});
@@ -373,7 +337,6 @@ public class RouteGeneratorTest {
 
         RouteGenerator longGenerator = new RouteGenerator(stations, startStation, longEnd, longGraph);
 
-        //test the shortest route calculation for the longer path
         boolean result = longGenerator.calculateShortestRoute();
         assertTrue("Should handle longer paths correctly", result);
     }

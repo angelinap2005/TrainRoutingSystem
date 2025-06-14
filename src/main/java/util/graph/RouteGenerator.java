@@ -59,6 +59,7 @@ public class RouteGenerator{
     }
 
     private NodesResult getAndValidateNodes() {
+        //check if start and end stations are set
         String startNodeName = startStation.getRailStation().getName();
         Node startNode = graph.getNode(startNodeName);
         String endNodeName = endStation.getRailStation().getName();
@@ -74,7 +75,7 @@ public class RouteGenerator{
 
     private void printRouteResults(Timestamp start, String routeType, Path path, List<Node> pathNodes, Double distance) {
         Timestamp end = new Timestamp(System.currentTimeMillis());
-        //print the shortest path
+        //print the details of the calculation
         System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
         System.out.println("\n" + routeType + " found:");
 
@@ -102,9 +103,7 @@ public class RouteGenerator{
             return null;
         }
 
-        //create path object
         Path path = new Path();
-
         //initialise path with start node
         path.setRoot(nodeList.get(0));
         //add edges to the path
@@ -122,7 +121,6 @@ public class RouteGenerator{
             }
 
             if (connectingEdge != null) {
-                //add edge to path
                 path.add(connectingEdge);
             }
         }
@@ -134,6 +132,7 @@ public class RouteGenerator{
         Dijkstra dijkstra = new Dijkstra(Dijkstra.Element.EDGE, null, "length");
         Timestamp start = new Timestamp(System.currentTimeMillis());
 
+        //get and validate start and end nodes
         NodesResult nodesResult = getAndValidateNodes();
         if (nodesResult == null) {
             return false;
@@ -162,7 +161,7 @@ public class RouteGenerator{
         if (nodesResult == null) {
             return false;
         }
-
+        //BFS to find the shortest path with the least number of stops
         List<Node> shortestPath = explore(nodesResult.startNode, nodesResult.endNode);
 
         if (shortestPath != null && shortestPath.size() > 0) {
@@ -193,13 +192,13 @@ public class RouteGenerator{
                 return reconstructPath(predecessors, source, destination);
             }
 
-            //explore all neighbors of the current node
+            //explore all neighbours of the current node
             for (Edge edge : current) {
-                Node neighbor = edge.getOpposite(current);
-                if (!visited.contains(neighbor)) {
-                    visited.add(neighbor);
-                    queue.add(neighbor);
-                    predecessors.put(neighbor, current);
+                Node neighbour = edge.getOpposite(current);
+                if (!visited.contains(neighbour)) {
+                    visited.add(neighbour);
+                    queue.add(neighbour);
+                    predecessors.put(neighbour, current);
                 }
             }
         }
@@ -211,13 +210,12 @@ public class RouteGenerator{
         List<Node> path = new ArrayList<>();
         Node current = destination;
 
-        //build path from destination to source
+        //build the path from end to start to ensure the order is correct
         while (current != null && !current.equals(source)) {
             path.add(0, current);
             current = predecessors.get(current);
         }
 
-        //add source to path
         if (current != null) {
             path.add(0, source);
         }
@@ -233,13 +231,12 @@ public class RouteGenerator{
             return false;
         }
 
-        //cost from start to current node (gScore)
+        //g and f scores for A* algorithm
         Map<Node, Double> gScore = new HashMap<>();
-        //estimated cost from start to end through current node (fScore)
         Map<Node, Double> fScore = new HashMap<>();
         Map<Node, Node> cameFrom = new HashMap<>();
         Set<Node> closedSet = new HashSet<>();
-        //priority queue for open set (nodes to be evaluated)
+        //priority queue for an open set (nodes to be evaluated)
         PriorityQueue<Node> openSet = new PriorityQueue<>(Comparator.comparingDouble(node -> fScore.getOrDefault(node, Double.MAX_VALUE)));
 
         //initialise scores for all nodes
@@ -252,11 +249,11 @@ public class RouteGenerator{
         openSet.add(nodesResult.startNode);
 
         while (!openSet.isEmpty()) {
+            //get the node with the lowest fScore from the open set
             Node current = openSet.poll();
 
             if (current.equals(nodesResult.endNode)) {
-                //path found, construct and display it
-                //reconstruct the path from end to start to get the correct order
+                //if the end node is reached, reconstruct the path
                 Path path = reconstructPathAStar(cameFrom, nodesResult.startNode, nodesResult.endNode);
                 setNodeStyle(nodesResult.startNode, nodesResult.endNode, path);
                 printRouteResults(start, "Shortest path", path, null, gScore.get(nodesResult.endNode));
@@ -266,29 +263,29 @@ public class RouteGenerator{
             closedSet.add(current);
 
             for (Edge edge : current.edges().toList()) {
-                Node neighbor = edge.getOpposite(current);
+                Node neighbour = edge.getOpposite(current);
 
-                if (closedSet.contains(neighbor)) {
+                if (closedSet.contains(neighbour)) {
                     //skip already evaluated nodes
                     continue;
                 }
 
-                //distance from current to neighbor
+                //if the neighbour is not in the open set, add it
                 double edgeWeight = edge.getAttribute("length", Double.class);
                 double tentativeGScore = gScore.get(current) + edgeWeight;
 
-                if (tentativeGScore < gScore.get(neighbor)) {
-                    //this path to neighbor is better
-                    cameFrom.put(neighbor, current);
-                    gScore.put(neighbor, tentativeGScore);
-                    fScore.put(neighbor, tentativeGScore + heuristicCost(neighbor, nodesResult.endNode));
+                //if the neighbour is not in the open set or the tentative gScore is better than the current gScore
+                if (tentativeGScore < gScore.get(neighbour)) {
+                    //update the scores and the path
+                    cameFrom.put(neighbour, current);
+                    gScore.put(neighbour, tentativeGScore);
+                    fScore.put(neighbour, tentativeGScore + heuristicCost(neighbour, nodesResult.endNode));
 
-                    if (!openSet.contains(neighbor)) {
-                        openSet.add(neighbor);
+                    if (!openSet.contains(neighbour)) {
+                        openSet.add(neighbour);
                     } else {
-                        //update the priority queue
-                        openSet.remove(neighbor);
-                        openSet.add(neighbor);
+                        openSet.remove(neighbour);
+                        openSet.add(neighbour);
                     }
                 }
             }
@@ -302,7 +299,9 @@ public class RouteGenerator{
         Station startStation = null;
         Station endStation = null;
 
+        //find the start and end stations in the list of stations
         for(Station station : stations){
+            //check if the station matches the start or end node
             if(station.getRailStation().getName().equals(from.getId())) {
                 startStation = station;
             }
@@ -316,8 +315,8 @@ public class RouteGenerator{
             }
         }
 
-        //if nodes have coordinates, calculate Euclidean distance
-        if(startStation != null && endStation != null){
+        //calculate Euclidean distance
+        if(startStation != null && endStation != null && startStation.getRailStation().getCoordinates() != null && endStation.getRailStation().getCoordinates() != null) {
             Double[] startCoords = startStation.getRailStation().getCoordinates();
             Double[] endCoords = endStation.getRailStation().getCoordinates();
 
@@ -329,12 +328,9 @@ public class RouteGenerator{
                 return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
             }
         }
-
-        //only print error for missing stations if they are the actual start/end stations
         if((from.getId().equals(startStation != null ? startStation.getRailStation().getName() : "") || to.getId().equals(endStation != null ? endStation.getRailStation().getName() : "")) && (startStation == null || endStation == null)) {
             System.err.println("Station " + from.getId() + " or station " + to.getId() + " not found in the list of stations.");
         }
-        //fallback to 0.0 if coordinates are not available
         return 0.0;
     }
 
@@ -342,7 +338,7 @@ public class RouteGenerator{
         Path path = new Path();
         Node current = end;
 
-        //build back the path from end to start
+        //reconstruct the path from end to start using the cameFrom map
         List<Edge> edges = new ArrayList<>();
         while (current != start) {
             Node prev = cameFrom.get(current);
@@ -351,7 +347,6 @@ public class RouteGenerator{
             current = prev;
         }
 
-        //create a path object with the edges
         if (!edges.isEmpty()) {
             path.setRoot(start);
             for (Edge edge : edges) {
@@ -377,18 +372,18 @@ public class RouteGenerator{
 
         //priority queue for an open set (nodes to be evaluated)
         PriorityQueue<Node> openSet = new PriorityQueue<>((a, b) -> {
-            int fScoreA = gScore.getOrDefault(a, Integer.MAX_VALUE) + estimateStopsToGoal(a, nodesResult.endNode);
-            int fScoreB = gScore.getOrDefault(b, Integer.MAX_VALUE) + estimateStopsToGoal(b, nodesResult.endNode);
+            int fScoreA = gScore.getOrDefault(a, Integer.MAX_VALUE);
+            int fScoreB = gScore.getOrDefault(b, Integer.MAX_VALUE);
             return Integer.compare(fScoreA, fScoreB);
         });
 
         gScore.put(nodesResult.startNode, 0);
         openSet.add(nodesResult.startNode);
 
-        //initialise gScore for all nodes
         while (!openSet.isEmpty()) {
             Node current = openSet.poll();
 
+            //if the current node is the end node, reconstruct the path
             if (current.equals(nodesResult.endNode)) {
                 List<Node> pathNodes = new ArrayList<>();
                 Node node = current;
@@ -400,7 +395,6 @@ public class RouteGenerator{
 
                 Path path = createPathFromNodes(pathNodes);
 
-                //style start and end nodes
                 setNodeStyle(nodesResult.startNode, nodesResult.endNode, path);
                 printRouteResults(start, "Route with least amount of stops", null, pathNodes, null);
                 return true;
@@ -408,40 +402,33 @@ public class RouteGenerator{
 
             closedSet.add(current);
 
-            //explore neighbors
+            //explore neighbours
             for (Edge edge : current.edges().toList()) {
-                Node neighbor = edge.getOpposite(current);
+                Node neighbour = edge.getOpposite(current);
 
-                if (closedSet.contains(neighbor)) {
+                if (closedSet.contains(neighbour)) {
                     continue;
                 }
 
-                //calculate tentative gScore
                 int tentativeGScore = gScore.get(current) + 1;
 
-                if (!gScore.containsKey(neighbor) || tentativeGScore < gScore.get(neighbor)) {
-                    cameFrom.put(neighbor, current);
-                    gScore.put(neighbor, tentativeGScore);
+                if (!gScore.containsKey(neighbour) || tentativeGScore < gScore.get(neighbour)) {
+                    //update the gScore and cameFrom map
+                    cameFrom.put(neighbour, current);
+                    gScore.put(neighbour, tentativeGScore);
 
-                    if (!openSet.contains(neighbor)) {
-                        openSet.add(neighbor);
+                    //if the neighbour is not in the open set, add it
+                    if (!openSet.contains(neighbour)) {
+                        openSet.add(neighbour);
                     } else {
-                        openSet.remove(neighbor);
-                        openSet.add(neighbor);
+                        openSet.remove(neighbour);
+                        openSet.add(neighbour);
                     }
                 }
             }
         }
-
-        //if no path found
         displayNoRouteFound(nodesResult.startNodeName, nodesResult.endNodeName);
         return false;
-    }
-
-    private int estimateStopsToGoal(Node current, Node goal) {
-        //use heuristic cost to estimate the number of stops to the goal
-        double distance = heuristicCost(current, goal);
-        return (int)(distance * 100);
     }
 
     public void displayRoute() {
@@ -459,6 +446,7 @@ public class RouteGenerator{
             viewer.enableAutoLayout(layout);
 
             new Timer().schedule(new TimerTask() {
+                //disable auto layout after 3 seconds to allow user interaction
                 @Override
                 public void run() {
                     viewer.disableAutoLayout();
@@ -504,7 +492,6 @@ public class RouteGenerator{
                                     node.setAttribute("ui.style", "text-size: 12px; z-index: 1000;");
                                 });
                             } else {
-                                //zoom out
                                 double newZoom = currentZoom * (1.0 + zoomFactor);
                                 newZoom = Math.min(newZoom, 3.0);
                                 camera.setViewPercent(newZoom);
@@ -519,8 +506,6 @@ public class RouteGenerator{
                             //recenter the camera after zooming
                             camera.setViewCenter(center.x, center.y, 0);
                         });
-
-                        //request focus on the component to enable keyboard controls
                         component.setFocusable(true);
                         component.requestFocus();
                     }
@@ -530,7 +515,6 @@ public class RouteGenerator{
             }).start();
 
         } catch (Exception e) {
-            //handle any exceptions that occur during graph generation or display
             System.err.println("Error displaying graph: " + e.getMessage());
         }
     }
@@ -567,11 +551,11 @@ public class RouteGenerator{
     }
 
     private void resetGraphEdges() {
-        //reset all edges to their original color
+        //reset all edges to their original colour
         graph.edges().forEach(edge -> {
-            String originalColor = edge.getAttribute("original.color").toString();
-            if (originalColor != null) {
-                edge.setAttribute("ui.style", "fill-color: " + originalColor + ";");
+            String originalColour = edge.getAttribute("original.color").toString();
+            if (originalColour != null) {
+                edge.setAttribute("ui.style", "fill-color: " + originalColour + ";");
             } else {
                 edge.setAttribute("ui.style", "fill-color: #0000FF;");
             }
@@ -645,14 +629,11 @@ public class RouteGenerator{
         if (pathWithLeastChanges != null && pathWithLeastChanges.size() > 0) {
             Path path = createPathFromNodes(pathWithLeastChanges);
 
-            //style start and end nodes, and the path
             setNodeStyle(nodesResult.startNode, nodesResult.endNode, path);
 
-            //calculate the number of line changes
             int lineChanges = calculateLineChanges(pathWithLeastChanges);
 
             Timestamp end = new Timestamp(System.currentTimeMillis());
-            //print the results
             System.out.println("Calculation completed in " + (end.getTime() - start.getTime()) + " ms");
             System.out.println("\nRoute with least line changes found:");
             System.out.println("Number of line changes: " + lineChanges);
@@ -660,7 +641,6 @@ public class RouteGenerator{
             System.out.println("Route: ");
             pathWithLeastChanges.forEach(node -> System.out.println("  -> " + node.getId()));
 
-            //display detailed line changes
             displayLineChanges(pathWithLeastChanges);
             return true;
         } else {
@@ -674,49 +654,50 @@ public class RouteGenerator{
         PriorityQueue<PathWithChanges> queue = new PriorityQueue<>(Comparator.comparingInt((PathWithChanges p) -> p.lineChanges).thenComparingInt(p -> p.path.size()));
 
         Set<Node> visited = new HashSet<>();
-        //initialise the path with the start node
         PathWithChanges initialPath = new PathWithChanges();
         initialPath.path.add(start);
         initialPath.lineChanges = 0;
         initialPath.currentLines = getLinesForStation(start.getId());
 
+        //add the initial path to the queue
         queue.offer(initialPath);
 
-        //BFS-like exploration
         while (!queue.isEmpty()) {
+            //get the path with the least line changes
             PathWithChanges current = queue.poll();
             Node currentNode = current.path.get(current.path.size() - 1);
 
+            //check if the end node is reached
             if (currentNode.equals(end)) {
                 return current.path;
             }
 
+            //if the current node has already been visited, skip it
             if (visited.contains(currentNode)) {
                 continue;
             }
             visited.add(currentNode);
 
-            //explore neighbors
             for (Edge edge : currentNode.edges().toList()) {
-                Node neighbor = edge.getOpposite(currentNode);
+                Node neighbour = edge.getOpposite(currentNode);
 
-                if (!visited.contains(neighbor)) {
+                if (!visited.contains(neighbour)) {
+                    //create a new path with the current node and the neighbour
                     PathWithChanges newPath = new PathWithChanges();
                     newPath.path.addAll(current.path);
-                    newPath.path.add(neighbor);
+                    newPath.path.add(neighbour);
 
-                    //get lines for the neighbor station
-                    Set<String> neighborLines = getLinesForStation(neighbor.getId());
+                    Set<String> neighbourLines = getLinesForStation(neighbour.getId());
                     Set<String> commonLines = new HashSet<>(current.currentLines);
-                    commonLines.retainAll(neighborLines);
+                    commonLines.retainAll(neighbourLines);
 
-                    //if there are no common lines, it means a line change is needed
+                    //if there are no common lines, a line change is needed
                     if (commonLines.isEmpty() && current.path.size() > 1) {
                         newPath.lineChanges = current.lineChanges + 1;
-                        newPath.currentLines = neighborLines;
+                        newPath.currentLines = neighbourLines;
                     } else {
                         newPath.lineChanges = current.lineChanges;
-                        newPath.currentLines = commonLines.isEmpty() ? neighborLines : commonLines;
+                        newPath.currentLines = commonLines.isEmpty() ? neighbourLines : commonLines;
                     }
 
                     queue.offer(newPath);
@@ -733,13 +714,11 @@ public class RouteGenerator{
         //find the station by name
         for (Station station : stations) {
             if (station.getRailStation().getName().equals(stationName)) {
-                //if the station has rail lines, extract their names
+                //if the station has rail lines, get the names of the lines
                 if (station.getRailStation().getRailLines() != null) {
                     station.getRailStation().getRailLines().forEach(line -> {
-                        //extract the line name, if it exists
                         if (line.getName() != null) {
-                            String lineName = extractLineName(line.getName());
-                            //add the line name to the set
+                            String lineName = getLineName(line.getName());
                             if (lineName != null) {
                                 lines.add(lineName);
                             }
@@ -753,7 +732,7 @@ public class RouteGenerator{
         return lines;
     }
 
-    private String extractLineName(String fullLineName) {
+    private String getLineName(String fullLineName) {
         if (fullLineName.contains(" - ")) {
             return fullLineName.split(" - ")[0];
         }
@@ -801,7 +780,6 @@ public class RouteGenerator{
             commonLines.retainAll(nextLines);
 
             if (commonLines.isEmpty() && i > 1) {
-                //if there are no common lines, it means a line change is needed
                 System.out.println("\nLine Change at: " + path.get(i-1).getId());
                 System.out.println("From lines: " + currentLines);
                 System.out.println("To lines: " + nextLines);

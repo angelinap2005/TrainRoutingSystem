@@ -46,7 +46,7 @@ public class UserControl {
                     planRoute(true);
                     break;
                 case "4":
-                    boolean success = planRouteWithLeastChanges();
+                    boolean success = planRoute();
                     if (success) {
                         viewMapOfRoute();
                     }
@@ -111,7 +111,7 @@ public class UserControl {
         }
     }
 
-    private boolean planRouteWithLeastChanges(){
+    private boolean planRoute(){
         try {
             //error handling for empty input
             System.out.println("Please enter the name of the starting station: ");

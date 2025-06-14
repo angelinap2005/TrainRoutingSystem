@@ -13,7 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-/*Code references:
+/*Code references for whole project:
 * https://graphstream-project.org/doc/
 * https://www.tutorialspoint.com/java_xml/java_dom_parse_document.htm
 * https://www.geeksforgeeks.org/java-program-to-extract-content-from-a-xml-document/
@@ -24,6 +24,14 @@ import java.util.ArrayList;
 * https://graphstream-project.org/doc/Tutorials/Storing-retrieving-and-displaying-data-in-graphs/#an-example-using-attributes-and-the-viewer
 * https://favtutor.com/blogs/breadth-first-search-java
 * https://www.geeksforgeeks.org/breadth-first-search-or-bfs-for-a-graph/
+* https://www.geeksforgeeks.org/a-search-algorithm/
+* https://www.baeldung.com/java-a-star-pathfinding
+* https://codegym.cc/groups/posts/a-search-algorithm-in-java
+* https://www.geeksforgeeks.org/euclidean-distance
+* https://stackoverflow.com/questions/44675827/how-to-zoom-into-a-graphstream-view
+* https://stackoverflow.com/questions/3137548/how-to-find-minimum-number-of-transfers-for-a-metro-or-railway-network
+* https://github.com/wlxiong/k_shortest_bus_routes
+* https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-in-java-using-priorityqueue
 */
 
 public class RailSystem {
@@ -39,16 +47,16 @@ public class RailSystem {
                 return;
             }
 
+            //parse the KML files
             FileParser parser = new FileParser();
             parser.traverse(parseDoc(railLinesPath));
             parser.traverse(parseDoc(railStationsPath));
 
-            //set rail lines
+            //set the rail lines for each station
             setRailLines(parser.getRailLines(), parser.getRailStations());
-            //generate graph objects
             GraphObjectGenerator graphObjectGenerator = new GraphObjectGenerator(parser.getRailLines(), parser.getRailStations());
             graphObjectGenerator.controller();
-            //generate graph
+            //generate the graph
             GraphGenerator graphGenerator = new GraphGenerator(graphObjectGenerator);
             graphGenerator.generateGraph(graphObjectGenerator.getStations());
             //pass to user control

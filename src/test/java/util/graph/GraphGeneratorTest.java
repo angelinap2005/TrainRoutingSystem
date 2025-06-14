@@ -10,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -240,7 +239,7 @@ public class GraphGeneratorTest {
 
         try {
             //reset the edge colors
-            graphGenerator.resetEdgeColors();
+            graphGenerator.resetEdgeColours();
             //assert that the resetEdgeColors method executes without exceptions
             assertTrue("resetEdgeColors should execute without exception", true);
         } catch (Exception e) {

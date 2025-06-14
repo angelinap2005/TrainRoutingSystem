@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RailLine extends RailObject {
-    private String color;
+    private String colour;
 
     public RailLine(){
         super();

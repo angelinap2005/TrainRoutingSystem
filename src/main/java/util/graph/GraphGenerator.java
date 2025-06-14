@@ -19,6 +19,11 @@ import dto.Route;
 import dto.Station;
 import org.graphstream.ui.view.camera.Camera;
 
+/*Code references for graph generation:
+ * https://graphstream-project.org/doc/
+ * https://graphstream-project.org/doc/Tutorials/Storing-retrieving-and-displaying-data-in-graphs/#an-example-using-attributes-and-the-viewer
+ */
+
 @Getter
 @Setter
 public class GraphGenerator {
@@ -53,7 +58,6 @@ public class GraphGenerator {
         graph.setAttribute("ui.antialias");
 
         for (Station station : stations) {
-            //check if station is null
             if (isValidStation(station)) {
                 RailStation railStation = station.getRailStation();
                 Node node = graph.addNode(railStation.getName());
@@ -82,7 +86,6 @@ public class GraphGenerator {
 
     private void addNodes(List<Station> stations) {
         for (Station station : stations) {
-            //check if station is null
             if (isValidStation(station)) {
                 String nodeName = station.getRailStation().getName();
                 try {
@@ -98,12 +101,10 @@ public class GraphGenerator {
 
     private void addEdges(List<Station> stations) {
         for (Station station : stations) {
-            //check if station is null
             if (!isValidStation(station)) continue;
 
             String sourceStation = station.getRailStation().getName();
 
-            //check if source station is null
             for (Route route : station.getRoutes()) {
                 try {
                     //check if route is valid
@@ -140,18 +141,16 @@ public class GraphGenerator {
         }
 
         try {
-            //check if the edge already exists
             Edge edge = graph.addEdge(edgeId, sourceStation, destStation, false);
             if (edge != null) {
                 //set edge attributes
                 Double weight = graphObjectGenerator.getStationDistances().getOrDefault(sourceStation, new HashMap<>()).getOrDefault(destStation, 1.0);
                 edge.setAttribute("length", weight);
 
-                String lineColor = getEdgeColor(sourceStation, destStation);
-                if (lineColor != null) {
-                    edge.setAttribute("ui.style", "fill-color: " + lineColor + ";");
-                    //store the original color as an attribute for later restoration
-                    edge.setAttribute("original.color", lineColor);
+                String lineColour = getEdgeColour(sourceStation, destStation);
+                if (lineColour != null) {
+                    edge.setAttribute("ui.style", "fill-color: " + lineColour + ";");
+                    edge.setAttribute("original.color", lineColour);
                 }
 
                 processedEdges.add(edgeId);
@@ -161,18 +160,18 @@ public class GraphGenerator {
         }
     }
 
-    public void resetEdgeColors() {
+    public void resetEdgeColours() {
         graph.edges().forEach(edge -> {
-            //reset edge color to its original value
-            String originalColor = edge.getAttribute("original.color").toString();
-            if (originalColor != null) {
-                //set the edge style to its original color
-                edge.setAttribute("ui.style", "fill-color: " + originalColor + ";");
+            //reset edge colour to its original value
+            String originalColour = edge.getAttribute("original.color").toString();
+            if (originalColour != null) {
+                //set the edge style to its original colour
+                edge.setAttribute("ui.style", "fill-color: " + originalColour + ";");
             }
         });
     }
 
-    private String getEdgeColor(String sourceStation, String destStation) {
+    private String getEdgeColour(String sourceStation, String destStation) {
         for (Station station : stations) {
             //check if station is null
             if (station.getRailStation().getName().equals(sourceStation)) {
@@ -180,10 +179,9 @@ public class GraphGenerator {
                     //check if route is null
                     if (route.getDestination().getName().equals(destStation)) {
                         RailLine railLine = route.getRailLine();
-                        //check if rail line is null and has a valid color
-                        if (railLine != null && railLine.getColor() != null) {
-                            //return the color of the rail line
-                            return railLine.getColor();
+                        if (railLine != null && railLine.getColour() != null) {
+                            //return the colour of the rail line
+                            return railLine.getColour();
                         }
                     }
                 }
@@ -252,7 +250,6 @@ public class GraphGenerator {
                                     node.setAttribute("ui.style", "text-size: 12px; z-index: 1000;");
                                 });
                             } else {
-                                //zoom out
                                 double newZoom = currentZoom * (1.0 + zoomFactor);
                                 newZoom = Math.min(newZoom, 3.0);
                                 camera.setViewPercent(newZoom);
@@ -267,8 +264,6 @@ public class GraphGenerator {
                             //recenter the camera after zooming
                             camera.setViewCenter(center.x, center.y, 0);
                         });
-
-                        //request focus on the component to enable keyboard controls
                         component.setFocusable(true);
                         component.requestFocus();
                     }
@@ -278,7 +273,6 @@ public class GraphGenerator {
             }).start();
 
         } catch (Exception e) {
-            //handle any exceptions that occur during graph generation or display
             System.err.println("Error displaying graph: " + e.getMessage());
         }
     }
@@ -318,7 +312,7 @@ public class GraphGenerator {
         if (start == null || end == null) {
             throw new IllegalArgumentException("Start and end station names cannot be null");
         }
-        resetEdgeColors();
+        resetEdgeColours();
 
         //find the start and end stations in the graph
         Station startStation = null;
@@ -356,12 +350,10 @@ public class GraphGenerator {
         }
 
         try {
-            //create a new RouteGenerator instance with the found stations and graph
             routeGenerator = new RouteGenerator(stations, startStation, endStation, graph);
             if(leastChanges){
                 return routeGenerator.calculateLeastChanges();
             }
-            //calculate the route based on the specified parameters
             if (aStar) {
                 //use A* algorithm for route calculation
                 return shortestRoute ? routeGenerator.calculateShortestRouteAStar() : routeGenerator.calculateLeastStationStopsAStar();
