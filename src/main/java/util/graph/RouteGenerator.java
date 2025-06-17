@@ -371,11 +371,10 @@ public class RouteGenerator{
         Set<Node> closedSet = new HashSet<>();
 
         //priority queue for an open set (nodes to be evaluated)
-        PriorityQueue<Node> openSet = new PriorityQueue<>((a, b) -> {
-            int fScoreA = gScore.getOrDefault(a, Integer.MAX_VALUE);
-            int fScoreB = gScore.getOrDefault(b, Integer.MAX_VALUE);
-            return Integer.compare(fScoreA, fScoreB);
-        });
+        PriorityQueue<Node> openSet = new PriorityQueue<>(
+                Comparator.comparingInt(node -> gScore.getOrDefault(node, Integer.MAX_VALUE))
+        );
+
 
         gScore.put(nodesResult.startNode, 0);
         openSet.add(nodesResult.startNode);

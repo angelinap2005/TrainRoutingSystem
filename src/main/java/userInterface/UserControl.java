@@ -71,7 +71,6 @@ public class UserControl {
 
     private void planRoute(boolean aStar) {
         try {
-            //error handling for empty input
             System.out.println("Please enter the name of the starting station: ");
             String start = scanner.nextLine();
             if (start == null || start.trim().isEmpty()) {
@@ -86,13 +85,11 @@ public class UserControl {
                 return;
             }
 
-            //error handling for start and end being the same
             if (start.equalsIgnoreCase(end)) {
                 System.out.println("Start and destination stations cannot be the same.");
                 return;
             }
 
-            //error handling for invalid input
             System.out.println("Would you like to view the shortest route or route with the least amount of stops? (shortest/least) ");
             String decision = scanner.nextLine();
             if (decision == null || (!decision.equalsIgnoreCase("shortest") && !decision.equalsIgnoreCase("least"))) {
@@ -113,7 +110,6 @@ public class UserControl {
 
     private boolean planRoute(){
         try {
-            //error handling for empty input
             System.out.println("Please enter the name of the starting station: ");
             String start = scanner.nextLine();
             if (start == null || start.trim().isEmpty()) {

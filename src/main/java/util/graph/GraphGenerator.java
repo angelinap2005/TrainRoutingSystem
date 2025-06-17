@@ -314,7 +314,6 @@ public class GraphGenerator {
         }
         resetEdgeColours();
 
-        //find the start and end stations in the graph
         Station startStation = null;
         Station endStation = null;
 
@@ -333,7 +332,6 @@ public class GraphGenerator {
             }
         }
 
-        //error handling for start and end stations not found
         if (startStation == null) {
             System.err.println("Start station '" + start + "' not found in the system");
             return false;
@@ -358,11 +356,10 @@ public class GraphGenerator {
                 //use A* algorithm for route calculation
                 return shortestRoute ? routeGenerator.calculateShortestRouteAStar() : routeGenerator.calculateLeastStationStopsAStar();
             }else{
-                //use Dijkstra's algorithm for route calculation
+                //use Dijkstra's or BFS algorithm for route calculation
                 return shortestRoute ? routeGenerator.calculateShortestRoute() : routeGenerator.calculateLeastStationStops();
             }
         } catch (Exception e) {
-            //handle any exceptions that occur during route calculation
             System.err.println("Error calculating route: " + e.getMessage());
             return false;
         }
