@@ -45,7 +45,7 @@ public class FileParser {
     private void railLineParser(Document doc) {
         //check if the document is valid
         NodeList styleList = doc.getElementsByTagName("Style");
-        Map<String, String> styleColorMap = new HashMap<>();
+        Map<String, String> styleColourMap = new HashMap<>();
 
         for (int i = 0; i < styleList.getLength(); i++) {
             Element styleElement = (Element) styleList.item(i);
@@ -59,7 +59,7 @@ public class FileParser {
                     //extract the color value and convert it to hex
                     String kmlColour = colourList.item(0).getTextContent();
                     String hexColour = convertKmlColourToHex(kmlColour);
-                    styleColorMap.put(styleId, hexColour);
+                    styleColourMap.put(styleId, hexColour);
                 }
             }
         }
@@ -81,9 +81,9 @@ public class FileParser {
                     String styleUrl = styleUrlList.item(0).getTextContent();
                     String styleId = styleUrl.substring(1);
 
-                    String color = styleColorMap.get(styleId);
-                    if (color != null) {
-                        railLine.setColour(color);
+                    String colour = styleColourMap.get(styleId);
+                    if (colour != null) {
+                        railLine.setColour(colour);
                     }
                 }
                 railLines.add(railLine);
