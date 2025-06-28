@@ -31,6 +31,7 @@ import org.graphstream.ui.view.camera.Camera;
  * https://www.baeldung.com/java-a-star-pathfinding
  * https://codegym.cc/groups/posts/a-search-algorithm-in-java
  * https://www.geeksforgeeks.org/euclidean-distance
+ * https://www.geeksforgeeks.org/java/java-program-for-dijkstras-shortest-path-algorithm-greedy-algo-7/
  *
  * Displaying the graph and user controls code taken from:
  * https://stackoverflow.com/questions/44675827/how-to-zoom-into-a-graphstream-view

@@ -28,9 +28,9 @@ public class UserControl {
 
         String input = scanner.nextLine();
 
-        if (input == null || input.isEmpty() || (!input.equals("1") && !input.equals("2") && !input.equals("3") && !input.equals("4"))) {
+        if (input == null || input.isEmpty() || (!input.equals("1") && !input.equals("2") && !input.equals("3") && !input.equals("4")  && !input.equals("5"))) {
             //error handling for invalid input
-            System.out.println("Please enter a valid option (1-4).");
+            System.out.println("Please enter a valid option (1-5)");
             return;
         }
 
