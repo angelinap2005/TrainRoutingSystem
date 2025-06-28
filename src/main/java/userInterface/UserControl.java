@@ -57,7 +57,6 @@ public class UserControl {
                     System.exit(0);
                     break;
                 default:
-                    System.out.println("DEBUG: Invalid choice received: '" + input + "'");
                     System.out.println("Please enter a valid option (1-5).");
             }
         } catch (Exception e) {
